@@ -1,7 +1,7 @@
 from typing import Tuple, List, Dict, Any
 import yaml
 from units import Q_
-from models import HXStage, GasStream, WaterStream
+from models import HXStage, GasStream, WaterStream, Drum
 
 
 def _q(node: Any) -> Q_:
@@ -60,8 +60,7 @@ def _map_nozzles(prefix: str, side: Dict[str, Any], spec: Dict[str, Q_]):
         spec[f"{prefix}_nozzle_k_out"] = _q(_get(outlet, "k"))
 
 
-def load_config(stages_path: str, streams_path: str | None = None
-               ) -> Tuple[List[HXStage], GasStream, WaterStream]:
+def load_config(stages_path: str, streams_path: str | None = None, drum_path: str | None = None):
     with open(stages_path, "r", encoding="utf-8") as fh:
         sdoc = yaml.safe_load(fh)
 
@@ -87,6 +86,15 @@ def load_config(stages_path: str, streams_path: str | None = None
         L = spec.get("hot_L", Q_(1, "m"))
         stages.append(HXStage(name=name, kind="generic", L=L, spec=spec))
 
+    drum = None
+    if drum_path:
+        ddoc = yaml.safe_load(open(drum_path, "r", encoding="utf-8"))
+        w = ddoc["water_drum"]
+        drum = Drum(
+            Di=_q(w["inner_diameter"]).to("m"),
+            L=_q(w["length"]).to("m"),
+        )
+
     if not streams_path:
         return stages, None, None
 
@@ -108,4 +116,4 @@ def load_config(stages_path: str, streams_path: str | None = None
         P=_q(w["pressure"]),
     )
 
-    return stages, gas, water
+    return stages, gas, water, drum

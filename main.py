@@ -2,6 +2,7 @@ import argparse, logging
 from logging_utils import setup_logging
 from io_loader import load_config
 from pipeline import SixStageCounterflow
+from geometry import GeometryBuilder
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
@@ -12,7 +13,9 @@ if __name__ == "__main__":
 
     setup_logging(args.log)
 
-    stages, gas, water = load_config(args.stages, args.streams)
+    stages, gas, water, drum = load_config(args.stages, args.streams)
+    if drum:
+        stages = GeometryBuilder(drum).enrich(stages)
     pipe = SixStageCounterflow(stages)
     gh, wh = pipe.run(gas, water)
 
