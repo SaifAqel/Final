@@ -66,3 +66,13 @@ class WaterProps:
     @staticmethod
     def cp_from_PT(P: Q_, T: Q_) -> Q_:
         return Q_(WaterProps._PT(P,T).cp, "kJ/kg/K").to("J/kg/K")
+    
+    # add below existing cp_from_PT
+    @staticmethod
+    def mu_from_PT(P: Q_, T: Q_) -> Q_:  return Q_(WaterProps._PT(P,T).mu, "Pa*s")
+
+    @staticmethod
+    def k_from_PT(P: Q_, T: Q_) -> Q_:   return Q_(WaterProps._PT(P,T).k, "W/m/K")
+
+    @staticmethod
+    def rho_from_PT(P: Q_, T: Q_) -> Q_: return Q_(WaterProps._PT(P,T).rho, "kg/m^3")

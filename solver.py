@@ -16,7 +16,6 @@ class StageSolver:
         self.gas = replace(gas, stage=stage.name)     # hot enters at x=0
         self.water = replace(water, stage=stage.name) # cold enters at x=L
 
-    @trace_calls()
     def solve(self, N: int = 60) -> Tuple[List[GasStream], List[WaterStream]]:
         L: Q_ = self.stage.L
         dx: Q_ = (L / N).to("m")
@@ -36,11 +35,13 @@ class StageSolver:
         # For counterflow, we’ll build water from the hot-inlet end by prepending
         water_hist: List[WaterStream] = [w]
 
-        UA_per_m: Q_ = ua_per_m(self.stage)
-
         for i in range(N):
+            # pointwise UA using current states
+            from physics import ua_per_m  # local import to avoid cycles
+            UA_per_m_val = ua_per_m(g, w, self.stage)
+
             # Heat rate per length using current interfacial ΔT
-            qprime = UA_per_m * (g.T - Tw)              # W/m
+            qprime = UA_per_m_val * (g.T - Tw)              # W/m
 
             # Hot side derivative
             cpg = cp_gas(g)

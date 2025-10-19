@@ -18,7 +18,7 @@ if __name__ == "__main__":
     if args.fast:
         for s in stages:
             s.L = Q_(0.2, "m")
-            if "UA_per_m" in s.hot: s.hot["UA_per_m"] *= 0.8
+            if "UA_per_m" in s.spec: s.spec["UA_per_m"] *= 0.8
 
     pipe = SixStageCounterflow(stages)
     gh, wh = pipe.run(gas, water)

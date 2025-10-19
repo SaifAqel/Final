@@ -64,6 +64,9 @@ def load_config(stages_path: str = "config/stages.yaml",
         if _get(node, "UA_per_m"):
             spec["UA_per_m"] = _q(_get(node, "UA_per_m"))
 
+        _wall_to_spec("hot", node, spec)
+        _wall_to_spec("cold", node, spec)
+
         stages.append(HXStage(name=name, kind="generic", L=L, spec=spec))
 
     # streams
@@ -88,3 +91,22 @@ def load_config(stages_path: str = "config/stages.yaml",
         water = WaterStream(Q_(3.333,"kg/s"), Q_(439000,"J/kg"), Q_(1_000_000,"Pa"))
 
     return stages, gas, water
+
+def _wall_to_spec(side: str, node: Dict[str, Any], spec: Dict[str, Q_]):
+    # side: "hot" or "cold"
+    w = _get(node, f"{side}_side.wall")
+    if not w:
+        return
+    # wall solid
+    if _get(w, "thickness"):
+        spec[f"{side}_wall_t"] = _q(_get(w, "thickness"))
+    if _get(w, "conductivity"):
+        spec[f"{side}_wall_k"] = _q(_get(w, "conductivity"))
+    # inner surface fouling + emissivity
+    inn = _get(w, "surfaces.inner") or {}
+    if _get(inn, "fouling_thickness"):
+        spec[f"{side}_foul_t"] = _q(_get(inn, "fouling_thickness"))
+    if _get(inn, "fouling_conductivity"):
+        spec[f"{side}_foul_k"] = _q(_get(inn, "fouling_conductivity"))
+    if _get(inn, "emissivity"):
+        spec[f"{side}_eps"] = _q(_get(inn, "emissivity"), "dimensionless")

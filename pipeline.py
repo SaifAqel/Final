@@ -11,7 +11,6 @@ class SixStageCounterflow:
     def __init__(self, stages: List[HXStage]):
         self.stages = stages
 
-    @trace_calls()
     def run(self, gas: GasStream, water: WaterStream) -> Tuple[List[GasStream], List[WaterStream]]:
         gas_hist: List[GasStream] = []     # was: gas_hist, water_hist = []
         water_hist: List[WaterStream] = []
