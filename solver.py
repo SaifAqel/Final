@@ -5,7 +5,7 @@ import logging
 from logging_utils import trace_calls
 from units import Q_, ureg
 from models import HXStage, GasStream, WaterStream
-from physics import cp_gas
+from physics import cp_gas, ua_per_m
 from props import WaterProps
 
 log = logging.getLogger("solver")
@@ -36,7 +36,7 @@ class StageSolver:
         # For counterflow, we’ll build water from the hot-inlet end by prepending
         water_hist: List[WaterStream] = [w]
 
-        UA_per_m: Q_ = self.stage.hot.get("UA_per_m", Q_(150.0, "W/K/m"))
+        UA_per_m: Q_ = ua_per_m(self.stage)
 
         for i in range(N):
             # Heat rate per length using current interfacial ΔT

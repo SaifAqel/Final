@@ -4,6 +4,19 @@ from units import Q_, ureg
 from models import GasStream, WaterStream, HXStage
 from props import GasProps, WaterProps
 
+@trace_calls(values=True)
+def ua_per_m(stage: HXStage) -> Q_:
+    # stage-specific constants; fall back to default
+    table = {
+        "HX_1": Q_(180.0, "W/K/m"),
+        "HX_2": Q_(140.0, "W/K/m"),
+        "HX_3": Q_(220.0, "W/K/m"),
+        "HX_4": Q_(140.0, "W/K/m"),
+        "HX_5": Q_(200.0, "W/K/m"),
+        "HX_6": Q_(160.0, "W/K/m"),
+    }
+    return stage.hot.get("UA_per_m") or table.get(stage.name, Q_(150.0, "W/K/m"))
+
 # Cantera mechanism: make sure phase name matches your YAML
 _gas = GasProps(mech_path="config/flue_cantera.yaml", phase="gas_mix")
 @trace_calls(values=True)
@@ -15,9 +28,9 @@ def T_water(w: WaterStream) -> Q_:  return WaterProps.T_from_Ph(w.P, w.h)
 
 @trace_calls(values=True)
 def heat_rate_per_length(g: GasStream, w: WaterStream, stage: HXStage) -> dict:
-    UA_per_m: Q_ = stage.hot.get("UA_per_m", Q_(100.0, "W/K/m"))  # still placeholder UA′
-    qprime = UA_per_m * (g.T - T_water(w))                        # W/m
-    return {"qprime": qprime, "UA_per_m": UA_per_m}
+    UA = ua_per_m(stage)
+    qprime = UA * (g.T - T_water(w))                 # W/m
+    return {"qprime": qprime, "UA_per_m": UA}
 
 @trace_calls(values=True)
 def rhs(g: GasStream, w: WaterStream, qprime: Q_, stage: HXStage) -> dict:
