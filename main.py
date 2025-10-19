@@ -7,7 +7,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--stages", default="config/stages.yaml")
     ap.add_argument("--streams", default="config/streams.yaml")
-    ap.add_argument("--log", default="INFO")
+    ap.add_argument("--log", default="DEBUG")
     args = ap.parse_args()
 
     setup_logging(args.log)

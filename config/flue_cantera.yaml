@@ -1,0 +1,225 @@
+# Cantera YAML scaffold for: CO2, H2O, SO2, O2, N2, Ar
+# Fill thermo and transport parameters later.
+
+units:
+  length: cm
+  time: s
+  quantity: mol
+  activation-energy: cal/mol
+
+phases:
+  - name: gas_mix
+    thermo: ideal-gas # density from EOS at T,P
+    transport: mixture-averaged # viscosity, conductivity
+    kinetics: none # nonreacting mixture
+    elements: [C, H, O, N, S, Ar]
+    species: [CO2, H2O, SO2, O2, N2, Ar]
+    state:
+      T: 300 K
+      P: 1 atm
+      X: "N2:1.0"
+
+species:
+  # ----------------------- CO2 -----------------------
+  - name: CO2
+    composition: { C: 1, O: 2 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            2.35677352,
+            8.98459677e-03,
+            -7.12356269e-06,
+            2.45919022e-09,
+            -1.43699548e-13,
+            -4.83719697e+04,
+            9.90105222,
+          ]
+        - [
+            3.85746029,
+            4.41437026e-03,
+            -2.21481404e-06,
+            5.23490188e-10,
+            -4.72084164e-14,
+            -4.83731448e+04,
+            2.27163806,
+          ]
+    transport:
+      model: gas
+      geometry: linear
+      diameter: 3.763
+      well-depth: 244.0
+      polarizability: 2.65
+      rotational-relaxation: 2.6
+      acentric-factor: 0.2236
+
+  # ----------------------- H2O -----------------------
+  - name: H2O
+    composition: { H: 2, O: 1 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            4.19864056,
+            -2.03643410e-03,
+            6.52040211e-06,
+            -5.48797062e-09,
+            1.77197817e-12,
+            -3.02937267e+04,
+            -8.49032208e-01,
+          ]
+        - [
+            3.03399249,
+            2.17691804e-03,
+            -1.64072518e-07,
+            -9.70419870e-11,
+            1.68200992e-14,
+            -3.00042971e+04,
+            4.96677010,
+          ]
+    transport:
+      model: gas
+      geometry: nonlinear
+      diameter: 2.641
+      well-depth: 809.1
+      polarizability: 0.0
+      rotational-relaxation: 4.0
+      acentric-factor: 0.344
+
+  # ----------------------- SO2 -----------------------
+  - name: SO2
+    composition: { S: 1, O: 2 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            4.88475400,
+            -2.17239500e-03,
+            6.74313500e-06,
+            -5.71253000e-09,
+            1.67180000e-12,
+            -3.05629240e+04,
+            2.29262800,
+          ]
+        - [
+            4.88475400,
+            -2.17239500e-03,
+            6.74313500e-06,
+            -5.71253000e-09,
+            1.67180000e-12,
+            -3.05629240e+04,
+            2.29262800,
+          ]
+    transport:
+      model: gas
+      geometry: nonlinear
+      diameter: 4.11
+      well-depth: 335.0
+      polarizability: 0.0
+      rotational-relaxation: 1.0
+      acentric-factor: 0.256
+
+  # ----------------------- O2 -----------------------
+  - name: O2
+    composition: { O: 2 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            3.78245636,
+            -2.99673416e-03,
+            9.84730201e-06,
+            -9.68129509e-09,
+            3.24372837e-12,
+            -1.06394356e+03,
+            3.65767573,
+          ]
+        - [
+            3.28253784,
+            1.48308754e-03,
+            -7.57966669e-07,
+            2.09470555e-10,
+            -2.16717794e-14,
+            -1.08845772e+03,
+            5.45323129,
+          ]
+    transport:
+      model: gas
+      geometry: linear
+      diameter: 3.458
+      well-depth: 107.4
+      polarizability: 1.6
+      rotational-relaxation: 3.8
+      acentric-factor: 0.0222
+
+  # ----------------------- N2 -----------------------
+  - name: N2
+    composition: { N: 2 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            3.53100528,
+            -1.23660987e-04,
+            -5.02999433e-07,
+            2.43530612e-09,
+            -1.40881235e-12,
+            -1.04697628e+03,
+            2.96747468,
+          ]
+        - [
+            2.95257626,
+            1.39690040e-03,
+            -4.92631603e-07,
+            7.86010367e-11,
+            -4.60755321e-15,
+            -9.23948688e+02,
+            5.87188762,
+          ]
+    transport:
+      model: gas
+      geometry: linear
+      diameter: 3.621
+      well-depth: 97.53
+      polarizability: 1.76
+      rotational-relaxation: 4.0
+      acentric-factor: 0.040
+
+  # ----------------------- Ar -----------------------
+  - name: Ar
+    composition: { Ar: 1 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            2.50000000,
+            0.00000000,
+            0.00000000,
+            0.00000000,
+            0.00000000,
+            -7.45375000E+02,
+            4.37967491,
+          ]
+        - [
+            2.50000000,
+            0.00000000,
+            0.00000000,
+            0.00000000,
+            0.00000000,
+            -7.45375000E+02,
+            4.37967491,
+          ]
+    transport:
+      model: gas
+      geometry: atom
+      diameter: 3.330
+      well-depth: 136.5
+      polarizability: 1.641
+      rotational-relaxation: 0.0
+      acentric-factor: 0.000
