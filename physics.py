@@ -156,13 +156,15 @@ def ua_per_m(g: GasStream, w: WaterStream, stage: HXStage) -> Q_:
     h_g = h_g_conv + h_g_rad
 
     # roughness for Cooper
-    Rp = spec.get("cold_roughness", Q_(1.5, "micrometer"))
+    r_hot_in  = spec.get("hot_roughness_in",  Q_(0.5, "micrometer"))   # gas-side
+    r_hot_out = spec.get("hot_roughness_out", Q_(0.5, "micrometer"))   # water-side
 
     # decide regime
     boiling = str(spec.get("water_boil", "")).lower() in {"1","true","yes","nukiyama","boil"} or _is_boiling(w.P, w.h)
 
     if boiling:
         # iterate on q'' ↔ h_cooper
+        Rp = r_hot_out
         dT = abs((g.T - Tw).to("K"))
         qpp = Q_(10.0, "kW/m^2").to("W/m^2")  # initial guess
         h_c = _h_water_boil_cooper(w.P, qpp, Rp)

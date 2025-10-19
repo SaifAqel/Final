@@ -2,7 +2,7 @@
 from dataclasses import replace
 from typing import List, Tuple
 import logging
-from logging_utils import trace_calls
+from logging_utils import trace_calls, _fmt
 from units import Q_, ureg
 from models import HXStage, GasStream, WaterStream
 from physics import cp_gas, ua_per_m
@@ -77,8 +77,28 @@ class StageSolver:
 
             g, w, Tw = g_next, w_next, Tw_next
 
-            if (i+1) % 10 == 0:
-                log.info("advancing", extra={"stage": self.stage.name, "step": i+1})
+            if (i + 1) % 10 == 0:
+                log.info(
+                    (
+                        "g: m=%s T=%s P=%s | "
+                        "w: m=%s h=%s T=%s P=%s | "
+                        "UA'=%s q'=%s x=%s/%s"
+                    )
+                    % (
+                        _fmt(g.mass_flow), _fmt(g.T), _fmt(g.P),
+                        _fmt(w.mass_flow), _fmt(w.h), _fmt(Tw), _fmt(w.P),
+                        _fmt(UA_per_m_val), _fmt(qprime),
+                        _fmt((i + 1) * dx), _fmt(L),
+                    ),
+                    extra={"stage": self.stage.name, "step": i + 1},
+                )
+
+
+
+
+
+
+
 
         # include final states
         return gas_hist, water_hist
