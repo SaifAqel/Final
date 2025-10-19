@@ -1,116 +1,111 @@
 from typing import Tuple, List, Dict, Any
 import yaml
-from logging_utils import trace_calls
-from units import Q_, ureg
+from units import Q_
 from models import HXStage, GasStream, WaterStream
 
-def _get(d: Dict[str, Any], path: str, default=None):
-    cur = d
-    for k in path.split("."):
-        if not isinstance(cur, dict) or k not in cur:
-            return default
-        cur = cur[k]
-    return cur
 
-def _q(node: Any, default_unit: str | None = None) -> Q_:
-    # Accept {value, unit} or bare number with default_unit or bare string "3 m"
+def _q(node: Any) -> Q_:
     if isinstance(node, dict) and "value" in node and "unit" in node:
-        return Q_(node["value"], str(node["unit"]))
-    if isinstance(node, (int, float)) and default_unit:
-        return Q_(node, default_unit)
-    if isinstance(node, str):
-        # e.g. "3 m" or "150 W/(m*K)"
-        return Q_(*node.split(maxsplit=1)) if " " in node else Q_(float(node), default_unit or "")
-    raise ValueError(f"Cannot parse quantity from: {node!r}")
+        unit = str(node["unit"])
+        if unit == "micrometer":
+            unit = "um"
+        if unit in ("dimensionless", "1"):
+            unit = ""
+        return Q_(node["value"], unit)
+    raise ValueError(f"Invalid quantity format: {node!r}")
 
-@trace_calls()
-def load_config(stages_path: str = "config/stages.yaml",
-                streams_path: str | None = "config/streams.yaml"
+
+def _get(d: Dict[str, Any], key: str, default=None):
+    return d.get(key, default) if isinstance(d, dict) else default
+
+
+def _wall_to_spec(prefix: str, wall: Dict[str, Any], spec: Dict[str, Q_]):
+    if not wall:
+        return
+
+    if _get(wall, "thickness"):
+        spec[f"{prefix}_wall_t"] = _q(_get(wall, "thickness"))
+    if _get(wall, "conductivity"):
+        spec[f"{prefix}_wall_k"] = _q(_get(wall, "conductivity"))
+
+    surf_in = _get(_get(wall, "surfaces"), "inner") or {}
+    if _get(surf_in, "roughness"):
+        spec[f"{prefix}_roughness_in"] = _q(_get(surf_in, "roughness"))
+    if _get(surf_in, "emissivity"):
+        spec[f"{prefix}_eps_in"] = _q(_get(surf_in, "emissivity"))
+    if _get(surf_in, "fouling_thickness"):
+        spec[f"{prefix}_foul_t_in"] = _q(_get(surf_in, "fouling_thickness"))
+    if _get(surf_in, "fouling_conductivity"):
+        spec[f"{prefix}_foul_k_in"] = _q(_get(surf_in, "fouling_conductivity"))
+
+    surf_out = _get(_get(wall, "surfaces"), "outer") or {}
+    if _get(surf_out, "roughness"):
+        spec[f"{prefix}_roughness_out"] = _q(_get(surf_out, "roughness"))
+    if _get(surf_out, "emissivity"):
+        spec[f"{prefix}_eps_out"] = _q(_get(surf_out, "emissivity"))
+    if _get(surf_out, "fouling_thickness"):
+        spec[f"{prefix}_foul_t_out"] = _q(_get(surf_out, "fouling_thickness"))
+    if _get(surf_out, "fouling_conductivity"):
+        spec[f"{prefix}_foul_k_out"] = _q(_get(surf_out, "fouling_conductivity"))
+
+
+def _map_nozzles(prefix: str, side: Dict[str, Any], spec: Dict[str, Q_]):
+    nozzles = _get(side, "nozzles") or {}
+    inlet = _get(nozzles, "inlet") or {}
+    outlet = _get(nozzles, "outlet") or {}
+
+    if _get(inlet, "k"):
+        spec[f"{prefix}_nozzle_k_in"] = _q(_get(inlet, "k"))
+    if _get(outlet, "k"):
+        spec[f"{prefix}_nozzle_k_out"] = _q(_get(outlet, "k"))
+
+
+def load_config(stages_path: str, streams_path: str | None = None
                ) -> Tuple[List[HXStage], GasStream, WaterStream]:
     with open(stages_path, "r", encoding="utf-8") as fh:
         sdoc = yaml.safe_load(fh)
 
     stages: List[HXStage] = []
     for name, node in sdoc["stages"].items():
-        L = (_q(_get(node, "hot_side.inner_length")) if _get(node, "hot_side.inner_length")
-             else _q(_get(node, "cold_side.inner_length")) if _get(node, "cold_side.inner_length")
-             else Q_(1.0, "m"))
-
-        # Unified stage specification; backward-compat mapping.
+        hot = _get(node, "hot_side") or {}
         spec: Dict[str, Q_] = {}
 
-        # UA baseline (overridable later)
-        spec["UA_per_m"] = Q_(150.0, "W/K/m")
+        if _get(hot, "inner_diameter"):
+            spec["hot_Di"] = _q(_get(hot, "inner_diameter"))
+        if _get(hot, "inner_length"):
+            spec["hot_L"] = _q(_get(hot, "inner_length"))
+        if _get(hot, "curvature_radius"):
+            spec["hot_Rc"] = _q(_get(hot, "curvature_radius"))
+        if _get(hot, "tubes_number"):
+            spec["hot_ntubes"] = _q(_get(hot, "tubes_number"))
+        if _get(hot, "pitch"):
+            spec["hot_pitch"] = _q(_get(hot, "pitch"))
 
-        # Hot-side mapped fields
-        if _get(node, "hot_side.inner_diameter"):
-            spec["hot_Di"] = _q(_get(node, "hot_side.inner_diameter"))
-        if _get(node, "hot_side.curvature_radius"):
-            spec["hot_Rc"] = _q(_get(node, "hot_side.curvature_radius"))
-        if _get(node, "hot_side.tubes_number"):
-            spec["hot_ntubes"] = _q(_get(node, "hot_side.tubes_number"), "dimensionless")
-        if _get(node, "hot_side.pitch"):
-            spec["hot_pitch"] = _q(_get(node, "hot_side.pitch"))
-        
+        _wall_to_spec("hot", _get(hot, "wall"), spec)
+        _map_nozzles("hot", hot, spec)
 
-
-        # Cold-side mapped fields
-        if _get(node, "cold_side.inner_diameter"):
-            spec["cold_Di"] = _q(_get(node, "cold_side.inner_diameter"))
-        if _get(node, "cold_side.flow_area"):
-            spec["cold_Ai"] = _q(_get(node, "cold_side.flow_area"))
-        if _get(node, "cold_side.wetted_perimeter"):
-            spec["cold_Pi"] = _q(_get(node, "cold_side.wetted_perimeter"))
-
-        # Optional direct UA override at stage root
-        if _get(node, "UA_per_m"):
-            spec["UA_per_m"] = _q(_get(node, "UA_per_m"))
-
-        _wall_to_spec("hot", node, spec)
-        _wall_to_spec("cold", node, spec)
-
+        L = spec.get("hot_L", Q_(1, "m"))
         stages.append(HXStage(name=name, kind="generic", L=L, spec=spec))
 
-    # streams
-    if streams_path:
-        with open(streams_path, "r", encoding="utf-8") as fh:
-            tdoc = yaml.safe_load(fh)
-        g = tdoc["gas_stream"]
-        w = tdoc["water_stream"]
-        gas = GasStream(
-            mass_flow=_q(g["mass_flow_rate"]),
-            T=_q(g["temperature"]),
-            P=_q(g["pressure"]),
-            comp={k: _q(v, "dimensionless") for k, v in g.get("composition", {}).items()},
-        )
-        water = WaterStream(
-            mass_flow=_q(w["mass_flow_rate"]),
-            h=_q(w["enthalpy"]),
-            P=_q(w["pressure"]),
-        )
-    else:
-        gas = GasStream(Q_(9.427,"kg/s"), Q_(2176.59,"K"), Q_(115000,"Pa"))
-        water = WaterStream(Q_(3.333,"kg/s"), Q_(439000,"J/kg"), Q_(1_000_000,"Pa"))
+    if not streams_path:
+        return stages, None, None
+
+    with open(streams_path, "r", encoding="utf-8") as fh:
+        tdoc = yaml.safe_load(fh)
+
+    g = tdoc["gas_stream"]
+    w = tdoc["water_stream"]
+
+    gas = GasStream(
+        mass_flow=_q(g["mass_flow_rate"]),
+        T=_q(g["temperature"]),
+        P=_q(g["pressure"]),
+        comp={k: _q(v) for k, v in _get(g, "composition", {}).items()},
+    )
+    water = WaterStream(
+        mass_flow=_q(w["mass_flow_rate"]),
+        h=_q(w["enthalpy"]),
+        P=_q(w["pressure"]),
+    )
 
     return stages, gas, water
-
-def _wall_to_spec(side: str, node: Dict[str, Any], spec: Dict[str, Q_]):
-    # side: "hot" or "cold"
-    w = _get(node, f"{side}_side.wall")
-    if not w:
-        return
-    # wall solid
-    if _get(w, "thickness"):
-        spec[f"{side}_wall_t"] = _q(_get(w, "thickness"))
-    if _get(w, "conductivity"):
-        spec[f"{side}_wall_k"] = _q(_get(w, "conductivity"))
-    # inner surface fouling + emissivity
-    inn = _get(w, "surfaces.inner") or {}
-    if _get(inn, "fouling_thickness"):
-        spec[f"{side}_foul_t"] = _q(_get(inn, "fouling_thickness"))
-    if _get(inn, "fouling_conductivity"):
-        spec[f"{side}_foul_k"] = _q(_get(inn, "fouling_conductivity"))
-    if _get(inn, "emissivity"):
-        spec[f"{side}_eps"] = _q(_get(inn, "emissivity"), "dimensionless")
-    if _get(inn, "roughness"):
-        spec[f"{side}_roughness"] = _q(_get(inn, "roughness"))

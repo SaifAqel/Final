@@ -5,7 +5,7 @@ stages:
       inner_length: { value: 5.276, unit: m }
       wall:
         thickness: { value: 0.0029, unit: m }
-        conductivity: { value: 16, unit: W/(m*K) }
+        conductivity: { value: 16, unit: W/m/K }
         surfaces:
           inner:
             roughness: { value: 0.5, unit: micrometer }
@@ -16,29 +16,12 @@ stages:
             roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
-    cold_side:
-      flow_area: { value: 0.0012, unit: m^2 }
-      wetted_perimeter: { value: 0.48, unit: m }
-      wall:
-        thickness: { value: 0.01, unit: m }
-        conductivity: { value: 45, unit: W/m/K }
-        surfaces:
-          inner:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.8, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
-          outer:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.85, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
+            fouling_conductivity: { value: 0.20, unit: W/m/K }
 
   HX_2:
     hot_side:
-      inner_length: { value: 0.8, unit: m }
       inner_diameter: { value: 1.6, unit: m }
+      inner_length: { value: 0.8, unit: m }
       curvature_radius: { value: 0.8, unit: m }
       nozzles:
         inlet:
@@ -58,24 +41,7 @@ stages:
             roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
-    cold_side:
-      flow_area: { value: 0.0008, unit: m^2 }
-      wetted_perimeter: { value: 0.32, unit: m }
-      wall:
-        thickness: { value: 0.01, unit: m }
-        conductivity: { value: 45, unit: W/m/K }
-        surfaces:
-          inner:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.8, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
-          outer:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.85, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
+            fouling_conductivity: { value: 0.20, unit: W/m/K }
 
   HX_3:
     hot_side:
@@ -98,28 +64,11 @@ stages:
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
-    cold_side:
-      flow_area: { value: 0.001, unit: m^2 }
-      wetted_perimeter: { value: 0.4, unit: m }
-      wall:
-        thickness: { value: 0.01, unit: m }
-        conductivity: { value: 45, unit: W/m/K }
-        surfaces:
-          inner:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.8, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
-          outer:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.85, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
 
   HX_4:
     hot_side:
-      inner_length: { value: 0.8, unit: m }
       inner_diameter: { value: 1.6, unit: m }
+      inner_length: { value: 0.8, unit: m }
       curvature_radius: { value: 0.8, unit: m }
       nozzles:
         inlet:
@@ -128,7 +77,7 @@ stages:
           k: { value: 1, unit: dimensionless }
       wall:
         thickness: { value: 0.0029, unit: m }
-        conductivity: { value: 16, unit: W/(m*K) }
+        conductivity: { value: 16, unit: W/m/K }
         surfaces:
           inner:
             roughness: { value: 0.5, unit: micrometer }
@@ -139,24 +88,7 @@ stages:
             roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
-    cold_side:
-      flow_area: { value: 0.0008, unit: m^2 }
-      wetted_perimeter: { value: 0.32, unit: m }
-      wall:
-        thickness: { value: 0.01, unit: m }
-        conductivity: { value: 45, unit: W/m/K }
-        surfaces:
-          inner:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.8, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
-          outer:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.85, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
+            fouling_conductivity: { value: 0.20, unit: W/m/K }
 
   HX_5:
     hot_side:
@@ -171,36 +103,22 @@ stages:
         surfaces:
           inner:
             roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.3, unit: dimensionless }
+            emissivity: { value: 0.30, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
+            fouling_conductivity: { value: 0.20, unit: W/m/K }
           outer:
             roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
-    cold_side:
-      flow_area: { value: 0.001, unit: m^2 }
-      wetted_perimeter: { value: 0.4, unit: m }
-      wall:
-        thickness: { value: 0.01, unit: m }
-        conductivity: { value: 45, unit: W/m/K }
-        surfaces:
-          inner:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.8, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
-          outer:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.85, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.2, unit: W/m/K }
 
   HX_6:
     hot_side:
-      inner_length: { value: 5.620, unit: m }
       inner_diameter: { value: 0.076, unit: m }
+      inner_length: { value: 5.620, unit: m }
+      tubes_number: { value: 100, unit: dimensionless }
+      layout: "triangular"
+      pitch: { value: 0.029, unit: m }
       wall:
         thickness: { value: 0.0029, unit: m }
         conductivity: { value: 16, unit: W/m/K }
@@ -213,23 +131,5 @@ stages:
           outer:
             roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.20, unit: W/m/K }
-
-    cold_side:
-      inner_length: { value: 5.620, unit: m }
-      inner_diameter: { value: 0.076, unit: m }
-      wall:
-        thickness: { value: 0.0029, unit: m }
-        conductivity: { value: 16, unit: W/m/K }
-        surfaces:
-          inner:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.80, unit: dimensionless }
-            fouling_thickness: { value: 0.0001, unit: m }
-            fouling_conductivity: { value: 0.20, unit: W/m/K }
-          outer:
-            roughness: { value: 0.5, unit: micrometer }
-            emissivity: { value: 0.85, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
