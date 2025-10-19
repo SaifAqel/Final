@@ -50,7 +50,7 @@ class StageSolver:
             # Cold side derivative in +x coordinates:
             # dh/dx = + q'/m ; but cold marches from x=L to 0, so use -dx step
             cpw = WaterProps.cp_from_PT(w.P, Tw)
-            dTwdx = + qprime / (w.mass_flow * cpw)      # K/m
+            dTwdx = - qprime / (w.mass_flow * cpw)      # K/m
 
             # Advance hot forward (+dx)
             g_next = replace(
@@ -67,8 +67,7 @@ class StageSolver:
             if Tw_next.magnitude > 1073.0: Tw_next = Q_(1073.0, "K")
 
             # Water enthalpy from energy balance (exact, no inversion):
-            # h(x - dx) = h(x) - (q'/m) * dx
-            h_next = (w.h - (qprime / w.mass_flow) * dx).to("J/kg")
+            h_next = (w.h + (qprime / w.mass_flow) * dx).to("J/kg")
             w_next = replace(w, h=h_next)
 
             gas_hist.append(g_next)
