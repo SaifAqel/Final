@@ -4,8 +4,12 @@ from logging_utils import trace_calls
 from units import Q_, ureg
 from models import GasStream, WaterStream, HXStage
 from props import GasProps, WaterProps
+from math import pi, log10
 
 sigma = Q_(5.670374419e-8, "W/m^2/K^4")  # Stefan–Boltzmann
+
+P_CRIT_WATER = Q_(22.064, "MPa")   # water critical pressure
+MW_WATER = 18.01528                # kg/kmol
 
 _gas = GasProps(mech_path="config/flue_cantera.yaml", phase="gas_mix")
 
@@ -121,43 +125,84 @@ def _h_water_singlephase(w: WaterStream, spec: dict, Tw: Q_) -> Q_:
     Nu = 3.66 if Re < 2300 else 0.023 * (Re**0.8) * (Pr**0.3)
     return (Nu * k / Dh).to("W/m^2/K")
 
-def _h_water_boil(w: WaterStream, spec: dict, Tw: Q_) -> Q_:
-    # Placeholder hook; replace with Rohsenow/Chen/Gungor-Winterton as needed
-    # Default to a high effective h to mimic nucleate boiling regime
-    return Q_(5000.0, "W/m^2/K")
+def _h_water_boil_cooper(P: Q_, qpp: Q_, Rp: Q_ = Q_(1.5, "micrometer"),
+                         M: float = MW_WATER) -> Q_:
+    """
+    Cooper pool-boiling correlation:
+      h[kW/m^2/K] = 55 * p_r^0.12 * (-log10(Rp[μm]))^-0.55 * M^-0.5 * (q'')[kW/m^2]^0.67
+    Returns h in W/m^2/K.
+    """
+    p_r = (P.to("MPa") / P_CRIT_WATER).magnitude
+    Rp_um = max(Rp.to("micrometer").magnitude, 1e-6)  # guard
+    q_kWm2 = max(qpp.to("kW/m^2").magnitude, 1e-12)
+    h_kWm2K = 55.0 * (p_r**0.12) * ((-log10(Rp_um))**-0.55) * (M**-0.5) * (q_kWm2**0.67)
+    return Q_(h_kWm2K, "kW/m^2/K").to("W/m^2/K")
 
-# ---------- overall UA per meter ----------
 @trace_calls(values=True)
 def ua_per_m(g: GasStream, w: WaterStream, stage: HXStage) -> Q_:
     spec = stage.spec
-    # per-length areas
+
+    # areas
     Agh = _Aprime_hot(spec)
     Ac  = _Aprime_cold(spec)
     Awm = _Aprime_wall_mean(spec)
 
-    # film temperature on cold side
+    # film T on cold side
     Tw = WaterProps.T_from_Ph(w.P, w.h)
 
-    # gas-side h = convection + radiation
+    # gas side h (fixed)
     h_g_conv = _h_gas_conv(g, spec)
     h_g_rad  = _h_gas_rad(g, spec)
     h_g = h_g_conv + h_g_rad
 
-    flag = str(stage.spec.get("water_boil", "")).lower() in {"1","true","yes","nukiyama","boil"}
-    if flag or _is_boiling(w.P, w.h):
-        h_c = _h_water_boil(w, stage.spec, Tw)
-    else:
-        h_c = _h_water_singlephase(w, stage.spec, Tw)
+    # roughness for Cooper
+    Rp = spec.get("cold_roughness", Q_(1.5, "micrometer"))
 
-    # fouling and wall data (optional, else zero)
+    # decide regime
+    boiling = str(spec.get("water_boil", "")).lower() in {"1","true","yes","nukiyama","boil"} or _is_boiling(w.P, w.h)
+
+    if boiling:
+        # iterate on q'' ↔ h_cooper
+        dT = abs((g.T - Tw).to("K"))
+        qpp = Q_(10.0, "kW/m^2").to("W/m^2")  # initial guess
+        h_c = _h_water_boil_cooper(w.P, qpp, Rp)
+
+        for _ in range(15):
+            # update UA with current h_c
+            t_fg = spec.get("hot_foul_t", Q_(0.0, "m")).to("m")
+            k_fg = spec.get("hot_foul_k", Q_(1e9, "W/m/K")).to("W/m/K")
+            t_fc = spec.get("cold_foul_t", Q_(0.0, "m")).to("m")
+            k_fc = spec.get("cold_foul_k", Q_(1e9, "W/m/K")).to("W/m/K")
+            t_w  = spec.get("hot_wall_t", spec.get("cold_wall_t", Q_(0.0, "m"))).to("m")
+            k_w  = spec.get("hot_wall_k",  spec.get("cold_wall_k", Q_(1e9, "W/m/K"))).to("W/m/K")
+
+            Rg  = (1.0 / (h_g * Agh)).to("K*m/W")
+            Rfg = (t_fg / (k_fg * Agh)).to("K*m/W")
+            Rw  = (t_w  / (k_w  * Awm)).to("K*m/W")
+            Rfc = (t_fc / (k_fc * Ac )).to("K*m/W")
+            Rc  = (1.0 / (h_c * Ac )).to("K*m/W")
+
+            UA_prime_iter = (1.0 / (Rg + Rfg + Rw + Rfc + Rc)).to("W/K/m")
+            qprime   = UA_prime_iter * dT
+            qpp_new  = (qprime / Ac).to("W/m^2")
+
+            qpp_next = 0.5*qpp + 0.5*qpp_new
+            if abs((qpp_next - qpp).to("W/m^2").magnitude) <= max(1e-2, 1e-3*qpp_next.to("W/m^2").magnitude):
+                qpp = qpp_next
+                break
+            qpp = qpp_next
+            h_c = _h_water_boil_cooper(w.P, qpp, Rp)
+    else:
+        h_c = _h_water_singlephase(w, spec, Tw)
+
+    # common UA with final h_c
     t_fg = spec.get("hot_foul_t", Q_(0.0, "m")).to("m")
-    k_fg = spec.get("hot_foul_k", Q_(1e9, "W/m/K")).to("W/m/K")  # avoid div-by-zero
+    k_fg = spec.get("hot_foul_k", Q_(1e9, "W/m/K")).to("W/m/K")
     t_fc = spec.get("cold_foul_t", Q_(0.0, "m")).to("m")
     k_fc = spec.get("cold_foul_k", Q_(1e9, "W/m/K")).to("W/m/K")
     t_w  = spec.get("hot_wall_t", spec.get("cold_wall_t", Q_(0.0, "m"))).to("m")
-    k_w  = spec.get("hot_wall_k", spec.get("cold_wall_k", Q_(1e9, "W/m/K"))).to("W/m/K")
+    k_w  = spec.get("hot_wall_k",  spec.get("cold_wall_k", Q_(1e9, "W/m/K"))).to("W/m/K")
 
-    # series resistances per length [K/W per m]
     Rg  = (1.0 / (h_g * Agh)).to("K*m/W")
     Rfg = (t_fg / (k_fg * Agh)).to("K*m/W")
     Rw  = (t_w  / (k_w  * Awm)).to("K*m/W")
@@ -167,6 +212,7 @@ def ua_per_m(g: GasStream, w: WaterStream, stage: HXStage) -> Q_:
     Rtot = Rg + Rfg + Rw + Rfc + Rc
     UA_prime = (1.0 / Rtot).to("W/K/m")
     return UA_prime
+
 
 # keep these wrappers working but delegate to the new UA
 def heat_rate_per_length(g: GasStream, w: WaterStream, stage: HXStage) -> dict:

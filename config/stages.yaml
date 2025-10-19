@@ -8,12 +8,12 @@ stages:
         conductivity: { value: 16, unit: W/(m*K) }
         surfaces:
           inner:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.30, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
           outer:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
@@ -25,12 +25,12 @@ stages:
         conductivity: { value: 45, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.8, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
           outer:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.85, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
@@ -50,12 +50,12 @@ stages:
         conductivity: { value: 16, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.30, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
           outer:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
@@ -67,12 +67,12 @@ stages:
         conductivity: { value: 45, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.8, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
           outer:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.85, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
@@ -89,12 +89,12 @@ stages:
         conductivity: { value: 16, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.30, unit: dimensionless }
             fouling_thickness: { value: 0.001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
           outer:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
@@ -106,12 +106,12 @@ stages:
         conductivity: { value: 45, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.8, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
           outer:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.85, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
@@ -131,12 +131,12 @@ stages:
         conductivity: { value: 16, unit: W/(m*K) }
         surfaces:
           inner:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.30, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
           outer:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
@@ -148,12 +148,12 @@ stages:
         conductivity: { value: 45, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.8, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
           outer:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.85, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
@@ -170,12 +170,12 @@ stages:
         conductivity: { value: 16, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.3, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
           outer:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
@@ -187,12 +187,12 @@ stages:
         conductivity: { value: 45, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.8, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
           outer:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.85, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.2, unit: W/m/K }
@@ -206,12 +206,12 @@ stages:
         conductivity: { value: 16, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.30, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
           outer:
-            roughness: { value: 0.000015, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
@@ -224,12 +224,12 @@ stages:
         conductivity: { value: 16, unit: W/m/K }
         surfaces:
           inner:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.80, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }
           outer:
-            roughness: { value: 0.00002, unit: m }
+            roughness: { value: 0.5, unit: micrometer }
             emissivity: { value: 0.85, unit: dimensionless }
             fouling_thickness: { value: 0.0001, unit: m }
             fouling_conductivity: { value: 0.20, unit: W/m/K }

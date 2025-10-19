@@ -51,6 +51,8 @@ def load_config(stages_path: str = "config/stages.yaml",
             spec["hot_ntubes"] = _q(_get(node, "hot_side.tubes_number"), "dimensionless")
         if _get(node, "hot_side.pitch"):
             spec["hot_pitch"] = _q(_get(node, "hot_side.pitch"))
+        
+
 
         # Cold-side mapped fields
         if _get(node, "cold_side.inner_diameter"):
@@ -110,3 +112,5 @@ def _wall_to_spec(side: str, node: Dict[str, Any], spec: Dict[str, Q_]):
         spec[f"{side}_foul_k"] = _q(_get(inn, "fouling_conductivity"))
     if _get(inn, "emissivity"):
         spec[f"{side}_eps"] = _q(_get(inn, "emissivity"), "dimensionless")
+    if _get(inn, "roughness"):
+        spec[f"{side}_roughness"] = _q(_get(inn, "roughness"))
