@@ -1,51 +1,84 @@
+# solver.py
 from dataclasses import replace
 from typing import List, Tuple
 import logging
 from logging_utils import trace_calls
 from units import Q_, ureg
 from models import HXStage, GasStream, WaterStream
-from physics import heat_rate_per_length, rhs
+from physics import cp_gas
+from props import WaterProps
 
 log = logging.getLogger("solver")
 
 class StageSolver:
     def __init__(self, stage: HXStage, gas: GasStream, water: WaterStream):
         self.stage = stage
-        self.gas = replace(gas, stage=stage.name)
-        self.water = replace(water, stage=stage.name)
+        self.gas = replace(gas, stage=stage.name)     # hot enters at x=0
+        self.water = replace(water, stage=stage.name) # cold enters at x=L
 
     @trace_calls()
-    def solve(self, dx: Q_ = Q_(0.1,"m"), tol_dT: Q_ = Q_(2.0,"K")) -> Tuple[List[GasStream], List[WaterStream]]:
+    def solve(self, N: int = 60) -> Tuple[List[GasStream], List[WaterStream]]:
         L: Q_ = self.stage.L
-        x: Q_ = Q_(0.0,"m")
-        gas_hist: List[GasStream] = []
-        water_hist: List[WaterStream] = []
-        step_i = 0
-        while x < L:
-            step_i += 1
-            hr = heat_rate_per_length(self.gas, self.water, self.stage)
-            derivs = rhs(self.gas, self.water, hr["qprime"], self.stage)
-            dT_est: Q_ = abs((derivs["dTgdx"] * dx).to("K"))
-            if dT_est > tol_dT:
-                dx *= 0.5
-                log.trace("cut step", extra={"stage": self.stage.name, "step": step_i})
-                continue
-            if dT_est < 0.25 * tol_dT:
-                dx *= 1.2
+        dx: Q_ = (L / N).to("m")
 
+        # Initialize local marching states
+        g = self.gas                      # at x=0  (hot inlet)
+        w = self.water                    # at x=L  (cold inlet)
+
+        # Recover initial water temperature safely once
+        try:
+            Tw = WaterProps.T_from_Ph(w.P, w.h)
+        except Exception:
+            # fall back near saturated liquid temp at P
+            Tw = (WaterProps.Tsat(w.P) - Q_(5.0, "K")).to("K")
+
+        gas_hist: List[GasStream] = [g]
+        # For counterflow, we’ll build water from the hot-inlet end by prepending
+        water_hist: List[WaterStream] = [w]
+
+        UA_per_m: Q_ = self.stage.hot.get("UA_per_m", Q_(150.0, "W/K/m"))
+
+        for i in range(N):
+            # Heat rate per length using current interfacial ΔT
+            qprime = UA_per_m * (g.T - Tw)              # W/m
+
+            # Hot side derivative
+            cpg = cp_gas(g)
+            dTgdx = - qprime / (g.mass_flow * cpg)      # K/m
+            dpgdx = Q_(0.0, "Pa/m")
+
+            # Cold side derivative in +x coordinates:
+            # dh/dx = + q'/m ; but cold marches from x=L to 0, so use -dx step
+            cpw = WaterProps.cp_from_PT(w.P, Tw)
+            dTwdx = + qprime / (w.mass_flow * cpw)      # K/m
+
+            # Advance hot forward (+dx)
             g_next = replace(
-                self.gas,
-                T=(self.gas.T + derivs["dTgdx"] * dx).to("K"),
-                P=(self.gas.P + derivs["dpgdx"] * dx).to("Pa"),
+                g,
+                T=(g.T + dTgdx * dx).to("K"),
+                P=(g.P + dpgdx * dx).to("Pa"),
             )
-            w_next = replace(
-                self.water,
-                h=(self.water.h + derivs["dhwdx"] * dx).to("J/kg"),
-            )
-            gas_hist.append(self.gas)
-            water_hist.append(self.water)
-            self.gas, self.water = g_next, w_next
-            x += dx
-            if step_i % 10 == 0:
-                log.info("advancing", extra={"stage": self.stage.name, "step": step_i})
+
+            # Advance cold backward (−dx): temperature decreases by dTwdx*dx in x sense,
+            # but we are stepping toward smaller x, so subtract
+            Tw_next = (Tw - dTwdx * dx).to("K")
+            # keep Tw in a sane band to avoid IAPWS blowups
+            if Tw_next.magnitude < 273.16: Tw_next = Q_(273.16, "K")
+            if Tw_next.magnitude > 1073.0: Tw_next = Q_(1073.0, "K")
+
+            # Water enthalpy from energy balance (exact, no inversion):
+            # h(x - dx) = h(x) - (q'/m) * dx
+            h_next = (w.h - (qprime / w.mass_flow) * dx).to("J/kg")
+            w_next = replace(w, h=h_next)
+
+            gas_hist.append(g_next)
+            # Build water history from hot-inlet end: prepend so index 0 is at x=0
+            water_hist.insert(0, w_next)
+
+            g, w, Tw = g_next, w_next, Tw_next
+
+            if (i+1) % 10 == 0:
+                log.info("advancing", extra={"stage": self.stage.name, "step": i+1})
+
+        # include final states
         return gas_hist, water_hist

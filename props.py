@@ -62,3 +62,7 @@ class WaterProps:
     def h_f(P: Q_) -> Q_:  return Q_(IAPWS97(P=P.to("megapascal").magnitude, x=0.0).h, "kJ/kg").to("J/kg")
     @staticmethod
     def h_g(P: Q_) -> Q_:  return Q_(IAPWS97(P=P.to("megapascal").magnitude, x=1.0).h, "kJ/kg").to("J/kg")
+
+    @staticmethod
+    def cp_from_PT(P: Q_, T: Q_) -> Q_:
+        return Q_(WaterProps._PT(P,T).cp, "kJ/kg/K").to("J/kg/K")
