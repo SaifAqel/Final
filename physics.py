@@ -15,7 +15,7 @@ def ua_per_m(stage: HXStage) -> Q_:
         "HX_5": Q_(200.0, "W/K/m"),
         "HX_6": Q_(160.0, "W/K/m"),
     }
-    return stage.hot.get("UA_per_m") or table.get(stage.name, Q_(150.0, "W/K/m"))
+    return stage.spec.get("UA_per_m") or table.get(stage.name, Q_(150.0, "W/K/m"))
 
 # Cantera mechanism: make sure phase name matches your YAML
 _gas = GasProps(mech_path="config/flue_cantera.yaml", phase="gas_mix")

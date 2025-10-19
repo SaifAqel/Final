@@ -22,8 +22,7 @@ class HXStage:
     name: str
     kind: str
     L: Q_                      # m
-    hot: Dict[str, Q_]         # free-form bag; must be Q_
-    cold: Dict[str, Q_]
+    spec: Dict[str, Q_]        # free-form bag; must be Q_
 
     def __iter__(self) -> Iterable[tuple[str, Q_]]:
         yield from (("L", self.L),)

@@ -32,24 +32,39 @@ def load_config(stages_path: str = "config/stages.yaml",
 
     stages: List[HXStage] = []
     for name, node in sdoc["stages"].items():
-        L = (_q(_get(node, "hot_side.inner_length")) if _get(node,"hot_side.inner_length")
-             else _q(_get(node, "cold_side.inner_length")) if _get(node,"cold_side.inner_length")
+        L = (_q(_get(node, "hot_side.inner_length")) if _get(node, "hot_side.inner_length")
+             else _q(_get(node, "cold_side.inner_length")) if _get(node, "cold_side.inner_length")
              else Q_(1.0, "m"))
-        UA_per_m = Q_(150.0, "W/K/m")  # placeholder unless you add it to YAML
 
-        hot: Dict[str, Q_] = {"UA_per_m": UA_per_m}
-        cold: Dict[str, Q_] = {"UA_per_m": UA_per_m}
+        # Unified stage specification; backward-compat mapping.
+        spec: Dict[str, Q_] = {}
 
-        Di_hot = _get(node, "hot_side.inner_diameter")
-        if Di_hot: hot["Di"] = _q(Di_hot)
+        # UA baseline (overridable later)
+        spec["UA_per_m"] = Q_(150.0, "W/K/m")
 
-        A_cold = _get(node, "cold_side.flow_area")
-        if A_cold: cold["Ai"] = _q(A_cold)
+        # Hot-side mapped fields
+        if _get(node, "hot_side.inner_diameter"):
+            spec["hot_Di"] = _q(_get(node, "hot_side.inner_diameter"))
+        if _get(node, "hot_side.curvature_radius"):
+            spec["hot_Rc"] = _q(_get(node, "hot_side.curvature_radius"))
+        if _get(node, "hot_side.tubes_number"):
+            spec["hot_ntubes"] = _q(_get(node, "hot_side.tubes_number"), "dimensionless")
+        if _get(node, "hot_side.pitch"):
+            spec["hot_pitch"] = _q(_get(node, "hot_side.pitch"))
 
-        Pwet_cold = _get(node, "cold_side.wetted_perimeter")
-        if Pwet_cold: cold["Pi"] = _q(Pwet_cold)
+        # Cold-side mapped fields
+        if _get(node, "cold_side.inner_diameter"):
+            spec["cold_Di"] = _q(_get(node, "cold_side.inner_diameter"))
+        if _get(node, "cold_side.flow_area"):
+            spec["cold_Ai"] = _q(_get(node, "cold_side.flow_area"))
+        if _get(node, "cold_side.wetted_perimeter"):
+            spec["cold_Pi"] = _q(_get(node, "cold_side.wetted_perimeter"))
 
-        stages.append(HXStage(name=name, kind="generic", L=L, hot=hot, cold=cold))
+        # Optional direct UA override at stage root
+        if _get(node, "UA_per_m"):
+            spec["UA_per_m"] = _q(_get(node, "UA_per_m"))
+
+        stages.append(HXStage(name=name, kind="generic", L=L, spec=spec))
 
     # streams
     if streams_path:
