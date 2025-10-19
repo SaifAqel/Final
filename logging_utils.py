@@ -29,21 +29,33 @@ def setup_logging(level: int | str = logging.INFO):
     h.addFilter(_Stage())
     root.addHandler(h)
 
-def trace_calls(name: str|None=None):
+def _fmt(v):
+    try:    return f"{v:.6g~P}"  # pint Quantity pretty
+    except: return repr(v)
+
+def trace_calls(name: str|None=None, values: bool=False):
     def _wrap(fn):
         qual = name or f"{fn.__module__}.{fn.__qualname__}"
         log = logging.getLogger(qual)
         @functools.wraps(fn)
         def _inner(*a, **k):
-            log.trace("enter", extra={"stage": k.get("stage","-"), "step": fn.__name__})
+            stage = k.get("stage","-")
+            log.trace("enter", extra={"stage": stage, "step": fn.__name__})
+            if values:
+                arg_s = ", ".join([*map(_fmt, a),
+                                   *[f"{kk}={_fmt(v)}" for kk,v in k.items()]])
+                log.trace(f"args: {arg_s}", extra={"stage": stage, "step": fn.__name__})
             t0=time.perf_counter()
             try:
                 out=fn(*a, **k)
-                log.trace(f"exit ok in {(time.perf_counter()-t0)*1000:.2f} ms",
-                          extra={"stage": k.get("stage","-"), "step": fn.__name__})
+                dt=(time.perf_counter()-t0)*1000
+                if values:
+                    log.trace(f"ret: {_fmt(out)}", extra={"stage": stage, "step": fn.__name__})
+                log.trace(f"exit ok in {dt:.2f} ms", extra={"stage": stage, "step": fn.__name__})
                 return out
             except Exception as e:
-                log.exception(f"exit err: {e}", extra={"stage": k.get("stage","-"), "step": fn.__name__})
+                log.exception(f"exit err: {e}", extra={"stage": stage, "step": fn.__name__})
                 raise
         return _inner
     return _wrap
+
