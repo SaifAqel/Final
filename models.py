@@ -23,9 +23,6 @@ class HXStage:
     kind: str
     spec: Dict[str, Q_]        # free-form bag; must be Q_
 
-    def __iter__(self) -> Iterable[tuple[str, Q_]]:
-        yield from (("L", self.L),)
-
 @dataclass
 class Drum:
     Di: Q_          # inner diameter, m

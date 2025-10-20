@@ -17,6 +17,7 @@ if __name__ == "__main__":
     stages, gas, water, drum = load_config(args.stages, args.streams, args.drum)
     if drum:
         stages = GeometryBuilder(drum).enrich(stages)
+    print(stages, gas, water)
     pipe = SixStageCounterflow(stages)
     gh, wh = pipe.run(gas, water)
 
