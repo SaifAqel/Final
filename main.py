@@ -8,12 +8,13 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--stages", default="config/stages.yaml")
     ap.add_argument("--streams", default="config/streams.yaml")
+    ap.add_argument("--drum", default="config/drum.yaml")
     ap.add_argument("--log", default="DEBUG")
     args = ap.parse_args()
 
     setup_logging(args.log)
 
-    stages, gas, water, drum = load_config(args.stages, args.streams)
+    stages, gas, water, drum = load_config(args.stages, args.streams, args.drum)
     if drum:
         stages = GeometryBuilder(drum).enrich(stages)
     pipe = SixStageCounterflow(stages)

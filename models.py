@@ -21,7 +21,6 @@ class WaterStream:
 class HXStage:
     name: str
     kind: str
-    L: Q_                      # m
     spec: Dict[str, Q_]        # free-form bag; must be Q_
 
     def __iter__(self) -> Iterable[tuple[str, Q_]]:

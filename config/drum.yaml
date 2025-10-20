@@ -1,6 +1,6 @@
 water_drum:
-  inner_diameter: { value: 1.2, unit: m }
-  length: { value: 28.0, unit: m } # informational here
+  inner_diameter: { value: 4.5, unit: m }
+  length: { value: 5.0, unit: m } # informational here
   wall:
     surfaces:
       inner:
