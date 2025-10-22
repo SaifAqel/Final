@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Iterable
+from typing import Dict, Any
 from units import Q_
 
 @dataclass
@@ -21,7 +21,7 @@ class WaterStream:
 class HXStage:
     name: str
     kind: str
-    spec: Dict[str, Q_]        # free-form bag; must be Q_
+    spec: Dict[str, Any]
 
 @dataclass
 class Drum:

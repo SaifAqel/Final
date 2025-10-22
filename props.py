@@ -55,6 +55,30 @@ class WaterProps:
     @staticmethod
     def cp_from_Ph(P: Q_, h: Q_) -> Q_:  return Q_(WaterProps._Ph(P,h).cp, "kJ/kg/K").to("J/kg/K")
 
+    @staticmethod
+    def quality_from_Ph(P: Q_, h: Q_) -> Optional[Q_]:
+        try:
+            Pcrit = Q_(22.064, "MPa")
+        except Exception:
+            Pcrit = Q_(22.064, "MPa")
+
+        if P >= Pcrit:
+            return None
+
+        hf = WaterProps.h_f(P)     # J/kg
+        hg = WaterProps.h_g(P)     # J/kg
+        dh = (hg - hf)
+        if abs(dh.m) < 1e-9:
+            return None
+
+        x = ((h - hf) / dh).to("")
+        if x.magnitude < -1e-6 or x.magnitude > 1 + 1e-6:
+            return None
+
+        # clamp to [0,1]
+        xm = min(1.0, max(0.0, x.magnitude))
+        return Q_(xm, "")
+
     # saturation
     @staticmethod
     def Tsat(P: Q_) -> Q_: return Q_(IAPWS97(P=P.to("megapascal").magnitude, x=0.0).T, "K")
@@ -76,3 +100,18 @@ class WaterProps:
 
     @staticmethod
     def rho_from_PT(P: Q_, T: Q_) -> Q_: return Q_(WaterProps._PT(P,T).rho, "kg/m^3")
+
+    @staticmethod
+    def rho_from_Px(P: Q_, x: Q_) -> Q_:
+        P_MPa = P.to("megapascal").magnitude
+        if x.magnitude <= 0:
+            return Q_(IAPWS97(P=P_MPa, x=0.0).rho, "kg/m^3")
+        if x.magnitude >= 1:
+            return Q_(IAPWS97(P=P_MPa, x=1.0).rho, "kg/m^3")
+
+        rho_f = IAPWS97(P=P_MPa, x=0.0).rho
+        rho_g = IAPWS97(P=P_MPa, x=1.0).rho
+
+        # mixture specific volume rule: 1/rho = (1-x)/rho_f + x/rho_g
+        v_mix = (1 - x.magnitude) / rho_f + x.magnitude / rho_g
+        return Q_(1 / v_mix, "kg/m^3")

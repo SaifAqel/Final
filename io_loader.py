@@ -6,14 +6,8 @@ from models import HXStage, GasStream, WaterStream, Drum
 
 def _q(node: Any) -> Q_:
     if isinstance(node, dict) and "value" in node and "unit" in node:
-        unit = str(node["unit"])
-        if unit == "micrometer":
-            unit = "um"
-        if unit in ("dimensionless", "1"):
-            unit = ""
-        return Q_(node["value"], unit)
+        return Q_(node["value"], str(node["unit"]))
     raise ValueError(f"Invalid quantity format: {node!r}")
-
 
 def _get(d: Dict[str, Any], key: str, default=None):
     return d.get(key, default) if isinstance(d, dict) else default
@@ -60,7 +54,11 @@ def load_config(stages_path: str, streams_path: str | None = None, drum_path: st
         }
         if "curvature_radius" in node: spec["curvature_radius"] = _q(node["curvature_radius"])
         if "tubes_number" in node:     spec["tubes_number"]     = _q(node["tubes_number"])
-        if "pitch" in node:            spec["pitch"]            = _q(node["pitch"])
+        if "ST" in node:               spec["ST"]               = _q(node["ST"])
+        if "SL" in node:               spec["SL"]               = _q(node["SL"])
+        if "arrangement" in node:      spec["arrangement"]      = str(node["arrangement"])
+        if "N_rows" in node:           spec["N_rows"]           = _q(node["N_rows"])
+        if "baffle_spacing" in node:   spec["baffle_spacing"]   = _q(node["baffle_spacing"])
 
         _wall_to_spec(_get(node, "wall"), spec)
         _map_nozzles(node, spec)

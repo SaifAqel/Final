@@ -24,6 +24,6 @@ if __name__ == "__main__":
     g_out, w_out = gh[-1], wh[-1]
     logging.getLogger("main").info("done", extra={"stage": stages[-1].name, "step": "outlet"})
     print(f"Stages: {len(stages)}")
-    print(f"Gas T_out: {g_out.T:.3f~P}")
+    print(f"Gas T_out: {g_out.T:.3f~P}") 
     print(f"Gas P_out: {g_out.P:.1f~P}")
     print(f"Water h_out: {w_out.h:.2f~P}")
