@@ -50,9 +50,13 @@ class GeometryBuilder:
                 arrangement = spec["arrangement"]
                 B = spec["baffle_spacing"]
 
+                nt = int(spec["tubes_number"].to("").magnitude)
+                nrows = int(spec["N_rows"].to("").magnitude)
+                n_cols = (nt + nrows - 1) // nrows
+
+
                 outer_diameter = (inner_diameter + 2*wall_t).to("m")
-                n_cols = (tubes_number + N_rows - 1) // N_rows
-                bundle_width = n_cols * ST
+                bundle_width = Q_(n_cols, "") * ST
                 A_fr = (B * bundle_width).to("m^2")
                 P_wet = (tubes_number * pi * outer_diameter).to("m")
 
@@ -109,12 +113,12 @@ class GeometryBuilder:
                 hot_flow_A  = (A_drum - A_tube_out).to("m^2")
                 cold_flow_A = tubes_number * (pi * (inner_diameter/2)**2)
                 P_wet = (tubes_number * pi * outer_diameter).to("m")
-                Dh    = (4 * A_flow / P_wet).to("m")
+                Dh    = (4 * hot_flow_A / P_wet).to("m")
 
                 spec["inner_perimeter"] = inner_perimeter
                 spec["outer_diameter"] = outer_diameter
                 spec["cold_flow_A"] = cold_flow_A
-                spec["cold_wet_P"] = (inner_perimeter * tubes_number)
+                spec["cold_wet_P"] = inner_perimeter
                 spec["hot_wet_P"] = P_wet
                 spec["hot_Dh"] = Dh
                 spec["hot_flow_A"] = hot_flow_A

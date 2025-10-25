@@ -1,9 +1,7 @@
-from math import pi, log10, log
-from logging_utils import trace_calls
-from units import Q_, ureg
-from models import GasStream, WaterStream, HXStage
-from props import GasProps, WaterProps
-from water_htc import water_htc
+from math import pi, log
+from units import Q_
+from models import GasStream
+from props import GasProps
 
 sigma = Q_(5.670374419e-8, "W/m^2/K^4")
 
@@ -13,8 +11,6 @@ MW_WATER = 18.01528
 _gas = GasProps(mech_path="config/flue_cantera.yaml", phase="gas_mix")
 
 def cp_gas(g: GasStream) -> Q_:    return _gas.cp(g.T, g.P, g.comp or {})
-def cp_water(w: WaterStream) -> Q_: return WaterProps.cp_from_Ph(w.P, w.h)
-def T_water(w: WaterStream) -> Q_:  return WaterProps.T_from_Ph(w.P, w.h)
 
 def _gas_velocity(g: GasStream, spec: dict) -> Q_:
     Di = spec["inner_diameter"].to("m")
@@ -36,7 +32,7 @@ def _h_gas_conv(g: GasStream, spec: dict) -> Q_:
 
 def _h_gas_rad(g: GasStream, spec: dict, Tgw) -> Q_:
     eps = spec["eps_in"].to("dimensionless").magnitude
-    Tf = 0.5 * (g.T - Tgw).to("kelvin")
+    Tf = 0.5 * (g.T + Tgw).to("kelvin")
     return (4.0 * eps * sigma * Tf**3).to("W/m^2/K")
 
 def gas_htc(g, spec, T_gw) -> Q_:
@@ -58,27 +54,3 @@ def wall_resistance(spec: dict) -> Q_:
     wall_t = spec["wall_t"].to("m")
     k  = spec["wall_k"].to("W/m/K")
     return (log((di + wall_t)/ di) / (2 * pi * k)).to("K*m/W")
-
-@trace_calls(values=True)
-def ua_per_m(g: GasStream, w:WaterStream, stage: HXStage, T_gw: Q_, T_ww: Q_, qpp: Q_):
-    spec = stage.spec
-    Pg = stage.spec["inner_perimeter"]
-    Pw = stage.spec["cold_wet_P"]
-    Tw  = WaterProps.T_from_Ph(w.P, w.h)
-
-    h_g = gas_htc(g, spec, T_gw)
-    h_c, boiling = water_htc(w, stage, T_ww, qpp)
-
-    Rg = (1.0 / (h_g * Pg)).to("K*m/W")
-    Rfg, Rfc = fouling_resistances(spec)
-    Rw = wall_resistance(spec)  # same area used previously (Awm = Agh)
-    Rc = (1.0 / (h_c * Pw)).to("K*m/W")
-
-    UA_prime = (1.0 / (Rg + Rfg + Rw + Rfc + Rc)).to("W/K/m")
-
-    # physical heat flux
-    dT = (g.T - Tw).to("K")
-    qprime = (UA_prime * dT).to("W/m")        # per length
-    qpp_phys = (qprime / Pw).to("W/m^2")
-
-    return UA_prime, qpp_phys, boiling

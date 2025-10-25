@@ -4,7 +4,7 @@ import logging
 from logging_utils import _fmt
 from units import Q_
 from models import HXStage, GasStream, WaterStream
-from physics import cp_gas, ua_per_m, gas_htc, wall_resistance, fouling_resistances
+from physics import cp_gas, gas_htc, wall_resistance, fouling_resistances
 from water_htc import water_htc
 from props import WaterProps
 
@@ -17,38 +17,59 @@ class StageSolver:
         self.water = replace(water, stage=stage.name)
 
     @staticmethod
-    def solve_wall_state(g, w, stage, Tg, Tw, qpp):
+    def solve_step(g, w, stage, Tgw_guess, Tww_guess, qprime_guess):
         spec = stage.spec
         Pg = spec["inner_perimeter"]
         Pw = spec["cold_wet_P"]
+        Tg = g.T
+        Tw = WaterProps.T_from_Ph(w.P, w.h)
+        Tgw = Tgw_guess
+        Tww = Tww_guess
+        qprime = qprime_guess
+        alpha = 0.5
+        tolT = Q_(1e-3,"K"); tolq = Q_(1e-3,"W/m"); maxit = 10
 
-        # one shot: get current UA' using guessed wall temps
-        UA_prime, _, _ = ua_per_m(g, w, stage, Tg, Tw, qpp)
-        # update consistent heat flux per length and per area
-        qpp = (UA_prime * (Tg - Tw) / Pg).to("W/m^2")
+        for _ in range(maxit):
+            h_g = gas_htc(g, spec, Tgw)
+            qpp_cold = (qprime / Pw).to("W/m^2")
+            h_c, boiling = water_htc(w, stage, Tww, qpp_cold)
+            Rfg, Rfc = fouling_resistances(spec)
+            Rw = wall_resistance(spec)
+            Rg = (1/(h_g*Pg)).to("K*m/W")
+            Rc = (1/(h_c*Pw)).to("K*m/W")
 
-        # conductances for wall temps
-        h_g = gas_htc(g, spec, Tg)
-        h_c, _ = water_htc(w, stage, Tw, qpp)
+            UA_prime = (1/(Rg + Rfg + Rw + Rfc + Rc)).to("W/K/m")
+
+            qprime_new = (UA_prime * (Tg - Tw)).to("W/m")
+
+            qpp_hot  = (qprime_new / Pg).to("W/m^2")
+            qpp_cold = (qprime_new / Pw).to("W/m^2")
+
+            Tgw_new = (Tg - qpp_hot/h_g - qpp_hot*Rfg*Pg).to("K")
+            Tww_new = (Tw + qpp_cold*Rw*Pw + qpp_cold*Rfc*Pw + qpp_cold/h_c).to("K")
+
+            dTgw = abs(Tgw_new - Tgw); dTww = abs(Tww_new - Tww); dq = abs(qprime_new - qprime)
+            if dTgw < tolT and dTww < tolT and dq < tolq:
+                Tgw, Tww, qprime = Tgw_new, Tww_new, qprime_new   # use actual converged values
+                break
+
+            Tgw = (alpha*Tgw_new + (1-alpha)*Tgw).to("K")
+            Tww = (alpha*Tww_new + (1-alpha)*Tww).to("K")
+            qprime = (alpha*qprime_new + (1-alpha)*qprime).to("W/m")
+        
+        h_g = gas_htc(g, spec, Tgw)
+        qpp_cold = (qprime / Pw).to("W/m^2")
+        h_c, boiling = water_htc(w, stage, Tww, qpp_cold)
         Rfg, Rfc = fouling_resistances(spec)
         Rw = wall_resistance(spec)
+        Rg = (1/(h_g*Pg)).to("K*m/W")
+        Rc = (1/(h_c*Pw)).to("K*m/W")
+        UA_prime = (1/(Rg + Rfg + Rw + Rfc + Rc)).to("W/K/m")
+        qprime = (UA_prime * (Tg - Tw)).to("W/m")
 
-        # drop across gas film and fouling on gas side
-        T_wg = (Tg - (qpp / h_g)).to("K")
-        T_wg = (T_wg - (qpp * Rfg * Pg)).to("K")
-
-        # drop across wall and water fouling and film
-        T_ww = (Tw + (qpp * Rw * Pg)).to("K")
-        T_ww = (T_ww + (qpp * Rfc * Pw)).to("K")
-        T_ww = (T_ww + (qpp / h_c)).to("K")
-
-        return T_wg, T_ww, UA_prime, qpp
-
-
+        return Tgw, Tww, UA_prime, qprime, boiling
 
     def solve(self, N: int = 60) -> Tuple[List[GasStream], List[WaterStream]]:
-        if "inner_length" not in self.stage.spec:
-            raise KeyError(f"{self.stage.name}: 'inner_length' required in spec")
         L: Q_ = self.stage.spec["inner_length"].to("m")
         dx: Q_ = (L / N).to("m")
 
@@ -59,48 +80,50 @@ class StageSolver:
 
         gas_hist: List[GasStream] = [g]
         water_hist: List[WaterStream] = [w]
-        qpp_hist = []
+        qprime_hist = []
+        Tgw_hist = []
+        Tww_hist = []
 
         for i in range(N):
-
-            if qpp_hist:
-                qpp_guess = qpp_hist[-1]
+            if qprime_hist:
+                qprime_guess = qprime_hist[-1]
+            if Tgw_hist:
+                Tgw_guess = Tgw_hist[-1]
+            if Tww_hist:
+                Tww_guess = Tww_hist[-1]
             else:
-                # one dry call to get UA0 using trivial wall temps and dummy qpp
-                UA0, _, boiling = ua_per_m(g, w, self.stage, g.T, Tw, Q_(0.0, "W/m^2"))
-                A = self.stage.spec["inner_perimeter"]
-                qpp_guess = (UA0 * (g.T - Tw) / A).to("W/m^2")
-
-            T_wg, T_ww, UA_per_m_val, qpp = self.solve_wall_state(g, w, self.stage, g.T, Tw, qpp_guess)
-            qpp_hist.append(qpp)
-            self.stage.spec["qpp_hist"] = qpp_hist
-            self.stage.spec["qpp_guess"] = qpp
-
-            qprime = UA_per_m_val * (g.T - Tw)
+                Tgw_guess = g.T
+                Tww_guess = Tw
+                qprime_guess = Q_(1e-9, "W/m")
+                
+            Tgw, Tww, UA_prime, qprime, boiling = self.solve_step(g, w, self.stage, Tgw_guess, Tww_guess, qprime_guess)
+            qprime_hist.append(qprime)
+            Tgw_hist.append(Tgw)
+            Tww_hist.append(Tww)
 
             cpg = cp_gas(g)
             dTgdx = - qprime / (g.mass_flow * cpg)
             dpgdx = Q_(0.0, "Pa/m")
+            dhwdx = (qprime / w.mass_flow).to("J/kg/m")
 
-            cpw = WaterProps.cp_from_PT(w.P, Tw)
-            dTwdx = - qprime / (w.mass_flow * cpw)
+            T_next = (g.T + dTgdx * dx).to("K")
+            P_next = (g.P + dpgdx * dx).to("Pa")
+            h_next = (w.h + dhwdx * dx).to("J/kg")
 
-            g_next = replace(g, T=(g.T + dTgdx * dx).to("K"), P=(g.P + dpgdx * dx).to("Pa"))
-            Tw_next = (Tw - dTwdx * dx).to("K")
-            h_next = (w.h + (qprime / w.mass_flow) * dx).to("J/kg")
+            g_next = replace(g, T=T_next, P=P_next)
             w_next = replace(w, h=h_next)
 
             gas_hist.append(g_next)
             water_hist.insert(0, w_next)
 
-            g, w, Tw = g_next, w_next, Tw_next
+            g, w = g_next, w_next
 
             if (i + 1) % 10 == 0:
                 log.info(
                     "g: m=%s T=%s P=%s | w: m=%s h=%s T=%s P=%s | T_wg=%s T_ww=%s UA'=%s q''=%s x=%s/%s boiling=%s"
                     % (_fmt(g.mass_flow), _fmt(g.T), _fmt(g.P),
                     _fmt(w.mass_flow), _fmt(w.h), _fmt(Tw), _fmt(w.P),
-                    _fmt(T_wg), _fmt(T_ww), _fmt(UA_per_m_val), _fmt(qpp),
+                    _fmt(Tgw), _fmt(Tww), _fmt(UA_prime), _fmt(qprime),
                     _fmt((i + 1) * dx), _fmt(L), _fmt(boiling)),
                     extra={"stage": self.stage.name, "step": i + 1},
                 )
