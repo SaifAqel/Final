@@ -275,7 +275,7 @@ def _chen_F_factor(Re_lo: Q_, x: float) -> Q_:
 def _chen_S_factor(qpp: Q_, G: Q_, h_lv: Q_, x: float) -> Q_:
     """Nucleate boiling suppression factor."""
     # Boiling number Bo = q'' / (G * h_lv)
-    Bo = (qpp / (G * h_lv)).to("").magnitude
+    Bo = (abs(qpp) / (G * h_lv)).to("").magnitude
     S = 1.0 / (1.0 + 2.53e-6 * (Bo ** -1.17))  # Chen’s empirical suppression
     # bound [0.1,1]
     return Q_(max(0.1, min(S, 1.0)), "")

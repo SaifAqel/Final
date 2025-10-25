@@ -27,7 +27,7 @@ class StageSolver:
         Tgw = Tgw_guess
         Tww = Tww_guess
         qprime = qprime_guess
-        alpha = 0.5
+        alpha = 0.25
         tolT = Q_(1e-3,"K"); tolq = Q_(1e-3,"W/m"); maxit = 10
 
         for _ in range(maxit):
