@@ -52,18 +52,16 @@ def h_gas_rad(g: GasStream, spec: Dict[str, Any], Tgw: Q_) -> Q_:
     return Q_(h_val, "W/m^2/K")
 
 def _gas_velocity(g: GasStream, spec: dict) -> Q_:
-    Di = spec["inner_diameter"].to("m")
-    nt = int(spec.get("tubes_number", Q_(1.0, "dimensionless")).to("dimensionless").magnitude)
-    Aflow = nt * (pi * (Di/2)**2)
-    rho = _gas.rho(g.T, g.P, g.comp or {})
+    Aflow = spec["hot_flow_A"]
+    rho = _gas.rho(g.T, g.P, g.comp)
     return (g.mass_flow / (rho * Aflow)).to("m/s")
 
 def h_gas_conv(g: GasStream, spec: dict) -> Q_:
     Di = spec["inner_diameter"].to("m")
     V = _gas_velocity(g, spec)
-    rho = _gas.rho(g.T, g.P, g.comp or {})
-    mu  = _gas.mu(g.T, g.P, g.comp or {})
-    k   = _gas.k(g.T, g.P, g.comp or {})
+    rho = _gas.rho(g.T, g.P, g.comp)
+    mu  = _gas.mu(g.T, g.P, g.comp)
+    k   = _gas.k(g.T, g.P, g.comp)
     Re = (rho * V * Di / mu).to("dimensionless").magnitude
     Pr = (cp_gas(g) * mu / k).to("dimensionless").magnitude
     Nu = 3.66 if Re < 2300 else 0.023 * (Re**0.8) * (Pr**0.4)

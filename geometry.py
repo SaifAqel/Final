@@ -24,11 +24,11 @@ class GeometryBuilder:
                 spec["roughness_cold_surface"] = spec["roughness_out"]
 
                 hot_wet_P = (pi * Di_t).to("m")
-                hot_flow_A = (A_drum - A_tube_out).to("m^2")
+                hot_flow_A = (pi * (Di_t/2)**2).to("m^2")
                 hot_Dh = (4 * hot_flow_A / hot_wet_P).to("m")
 
                 cold_wet_P = (pi * Do_t).to("m")
-                cold_flow_A = (pi * (Di_t/2)**2).to("m^2")
+                cold_flow_A = (A_drum - A_tube_out).to("m^2")
                 cold_Dh = (4 * cold_flow_A / cold_wet_P).to("m")
 
                 spec.update({
@@ -55,17 +55,16 @@ class GeometryBuilder:
                 spec["outer_diameter"] = Do_t
 
 
-                # If hot side is shell/drum:
                 A_drum = (pi * (Ds/2)**2).to("m^2")
                 A_tube_out = (pi * (Do_t/2)**2).to("m^2")
-                cold_wet_P = (Nt * pi * Do_t).to("m")  # shell-side over OD
-                cold_flow_A = (A_drum - Nt * A_tube_out).to("m^2")
-                cold_Dh = (4 * hot_flow_A / hot_wet_P).to("m")
 
-                # Cold (tube-side)
+                cold_wet_P = (Nt * pi * Do_t).to("m")
+                cold_flow_A = (A_drum - Nt * A_tube_out).to("m^2")
+                cold_Dh = (4 * cold_flow_A / cold_wet_P).to("m")
+
                 hot_wet_P = (Nt * pi * Di_t).to("m")
                 hot_flow_A = (Nt * (pi * (Di_t/2)**2)).to("m^2")
-                hot_Dh = (4 * cold_flow_A / cold_wet_P).to("m")
+                hot_Dh = (4 * hot_flow_A / hot_wet_P).to("m")
 
                 spec.update({
                     "hot_wet_P": hot_wet_P, "hot_flow_A": hot_flow_A, "hot_Dh": hot_Dh,
@@ -89,11 +88,11 @@ class GeometryBuilder:
                 spec["roughness_cold_surface"] = spec["roughness_out"]
 
                 hot_wet_P = (pi * Di_t).to("m")
-                hot_flow_A = (A_drum - A_tube_out).to("m^2")
+                hot_flow_A = (pi * (Di_t/2)**2).to("m^2")
                 hot_Dh = (4 * hot_flow_A / hot_wet_P).to("m")
 
                 cold_wet_P = (pi * Do_t).to("m")
-                cold_flow_A = (pi * (Di_t/2)**2).to("m^2")
+                cold_flow_A = (A_drum - A_tube_out).to("m^2")
                 cold_Dh = (4 * cold_flow_A / cold_wet_P).to("m")
 
                 spec.update({
@@ -118,11 +117,11 @@ class GeometryBuilder:
                 spec["outer_diameter"] = Do_t
                 spec["roughness_cold_surface"] = spec["roughness_in"]
 
-                hot_wet_P = (Nt * pi * Di_t).to("m")
+                hot_wet_P = (Nt * pi * Do_t).to("m")
                 hot_flow_A = (A_drum - Nt * A_tube_out).to("m^2")
                 hot_Dh = (4 * hot_flow_A / hot_wet_P).to("m")
 
-                cold_wet_P = (Nt * pi * Do_t).to("m")
+                cold_wet_P = (Nt * pi * Di_t).to("m")
                 cold_flow_A = (Nt * (pi * (Di_t/2)**2)).to("m^2")
                 cold_Dh = (4 * cold_flow_A / cold_wet_P).to("m")
 
