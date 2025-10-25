@@ -212,7 +212,7 @@ def water_htc(w: WaterStream, stage: HXStage, T_wall: Q_, qpp: Q_) -> tuple[Q_, 
     boiling = _is_boiling(w.P, w.h, T_wall)
     if boiling:
         h_lo = _h_liquid_only(w, stage, T_wall)
-        h_nb = _h_water_boil_cooper(w.P, qpp, stage.spec["roughness_out"])
+        h_nb = _h_water_boil_cooper(w.P, qpp, stage.spec["roughness_cold_surface"])
         T_sat, rho_l, mu_l, k_l, cp_l = _liq_props_at_P(w.P)
         A = stage.spec["cold_flow_A"]
         G = _mass_flux(w, A)

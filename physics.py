@@ -5,9 +5,6 @@ from props import GasProps
 
 sigma = Q_(5.670374419e-8, "W/m^2/K^4")
 
-P_CRIT_WATER = Q_(22.064, "MPa")
-MW_WATER = 18.01528
-
 _gas = GasProps(mech_path="config/flue_cantera.yaml", phase="gas_mix")
 
 def cp_gas(g: GasStream) -> Q_:    return _gas.cp(g.T, g.P, g.comp or {})

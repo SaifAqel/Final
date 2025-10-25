@@ -28,6 +28,7 @@ class GeometryBuilder:
                 P_wet = (pi * outer_diameter).to("m")
                 Dh    = (4 * A_flow_cold / P_wet).to("m")
 
+                spec["roughness_cold_surface"] = spec["roughness_out"]
                 spec["outer_diameter"] = outer_diameter
                 spec["inner_perimeter"] = inner_perimeter
                 spec["outer_perimeter"] = outer_perimeter
@@ -57,19 +58,25 @@ class GeometryBuilder:
 
                 outer_diameter = (inner_diameter + 2*wall_t).to("m")
                 bundle_width = Q_(n_cols, "") * ST
-                A_fr = (B * bundle_width).to("m^2")
+
+                Ds = spec["shell_inner_diameter"].to("m")
+                B  = spec["baffle_spacing"].to("m")
+                pt = spec["ST"].to("m")
+                do = (inner_diameter + 2*wall_t).to("m")
+
+                FAR = (1 - do/pt).to("dimensionless")
+                A_cross = (Ds * B * FAR).to("m^2")
+
+                spec["cold_flow_A"] = A_cross
+                spec["umax_factor"] = ((Ds * B) / A_cross).to("dimensionless")
+
                 P_wet = (tubes_number * pi * outer_diameter).to("m")
 
+                spec["roughness_cold_surface"] = spec["roughness_out"]
                 spec["outer_diameter"]   = outer_diameter
                 spec["inner_perimeter"]  = (tubes_number * pi * inner_diameter).to("m")
                 spec["hot_flow_A"]       = (tubes_number * (pi * (inner_diameter/2)**2)).to("m^2")
-                spec["cold_flow_A"] = A_fr
                 spec["cold_wet_P"] = P_wet
-
-                if arrangement == "inline":
-                    spec["umax_factor"] = (ST / (ST - outer_diameter)).to("dimensionless")
-                else:
-                    spec["umax_factor"] = (ST / (ST - 0.5*outer_diameter)).to("dimensionless")
 
                 out.append(replace(stg, spec=spec))
 
@@ -89,6 +96,7 @@ class GeometryBuilder:
                 P_wet = (pi * outer_diameter).to("m")
                 Dh    = (4 * A_flow / P_wet).to("m")
 
+                spec["roughness_cold_surface"] = spec["roughness_out"]
                 spec["inner_perimeter"] = inner_perimeter
                 spec["outer_diameter"] = outer_diameter
                 spec["cold_flow_A"] = A_flow
@@ -115,6 +123,7 @@ class GeometryBuilder:
                 P_wet = (tubes_number * pi * outer_diameter).to("m")
                 Dh    = (4 * hot_flow_A / P_wet).to("m")
 
+                spec["roughness_cold_surface"] = spec["roughness_in"]
                 spec["inner_perimeter"] = inner_perimeter
                 spec["outer_diameter"] = outer_diameter
                 spec["cold_flow_A"] = cold_flow_A
