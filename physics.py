@@ -36,7 +36,7 @@ def _h_gas_conv(g: GasStream, spec: dict) -> Q_:
 
 def _h_gas_rad(g: GasStream, spec: dict, Tgw) -> Q_:
     eps = spec["eps_in"].to("dimensionless").magnitude
-    Tf = (g.T - Tgw).to("kelvin")
+    Tf = 0.5 * (g.T - Tgw).to("kelvin")
     return (4.0 * eps * sigma * Tf**3).to("W/m^2/K")
 
 def gas_htc(g, spec, T_gw) -> Q_:
@@ -63,7 +63,7 @@ def wall_resistance(spec: dict) -> Q_:
 def ua_per_m(g: GasStream, w:WaterStream, stage: HXStage, T_gw: Q_, T_ww: Q_, qpp: Q_):
     spec = stage.spec
     Pg = stage.spec["inner_perimeter"]
-    Pw = stage.spec["cold_Pi"]
+    Pw = stage.spec["cold_wet_P"]
     Tw  = WaterProps.T_from_Ph(w.P, w.h)
 
     h_g = gas_htc(g, spec, T_gw)

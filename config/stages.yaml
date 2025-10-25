@@ -125,8 +125,6 @@ stages:
     inner_diameter: { value: 0.076, unit: m }
     inner_length: { value: 5.620, unit: m }
     tubes_number: { value: 100, unit: dimensionless }
-    layout: "triangular"
-    pitch: { value: 0.029, unit: m }
     wall:
       thickness: { value: 0.0029, unit: m }
       conductivity: { value: 16, unit: W/m/K }

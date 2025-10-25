@@ -57,14 +57,9 @@ class WaterProps:
 
     @staticmethod
     def quality_from_Ph(P: Q_, h: Q_) -> Optional[Q_]:
-        try:
-            Pcrit = Q_(22.064, "MPa")
-        except Exception:
-            Pcrit = Q_(22.064, "MPa")
-
+        Pcrit = Q_(22.064, "MPa")
         if P >= Pcrit:
             return None
-
         hf = WaterProps.h_f(P)     # J/kg
         hg = WaterProps.h_g(P)     # J/kg
         dh = (hg - hf)

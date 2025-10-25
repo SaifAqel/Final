@@ -4,7 +4,8 @@ import logging
 from logging_utils import _fmt
 from units import Q_
 from models import HXStage, GasStream, WaterStream
-from physics import cp_gas, ua_per_m
+from physics import cp_gas, ua_per_m, gas_htc, wall_resistance, fouling_resistances
+from water_htc import water_htc
 from props import WaterProps
 
 log = logging.getLogger("solver")
@@ -14,21 +15,35 @@ class StageSolver:
         self.stage = stage
         self.gas = replace(gas, stage=stage.name)
         self.water = replace(water, stage=stage.name)
+
     @staticmethod
     def solve_wall_state(g, w, stage, Tg, Tw, qpp):
-        A = stage.spec["inner_perimeter"]
-        n = 100
-        tq = Q_(1e2, "watt / meter**2")   # heat-flux atol
-        tT = Q_(1e-3, "kelvin") 
-        T_wg = Tg
-        T_ww = Tw
-        for _ in range(n):
-            UA_per_m, qpp, _ = ua_per_m(g, w, stage, T_wg, T_ww, qpp)
-            qpp_new = (UA_per_m * (Tg - Tw) / A)
-            if abs(qpp_new - qpp) < tq and abs(T_wg - Tg) < tT and abs(T_ww - Tw) < tT:
-                return T_wg, T_ww, UA_per_m, qpp_new
-            qpp = qpp_new
-        return T_wg, T_ww, UA_per_m, qpp
+        spec = stage.spec
+        Pg = spec["inner_perimeter"]
+        Pw = spec["cold_wet_P"]
+
+        # one shot: get current UA' using guessed wall temps
+        UA_prime, _, _ = ua_per_m(g, w, stage, Tg, Tw, qpp)
+        # update consistent heat flux per length and per area
+        qpp = (UA_prime * (Tg - Tw) / Pg).to("W/m^2")
+
+        # conductances for wall temps
+        h_g = gas_htc(g, spec, Tg)
+        h_c, _ = water_htc(w, stage, Tw, qpp)
+        Rfg, Rfc = fouling_resistances(spec)
+        Rw = wall_resistance(spec)
+
+        # drop across gas film and fouling on gas side
+        T_wg = (Tg - (qpp / h_g)).to("K")
+        T_wg = (T_wg - (qpp * Rfg * Pg)).to("K")
+
+        # drop across wall and water fouling and film
+        T_ww = (Tw + (qpp * Rw * Pg)).to("K")
+        T_ww = (T_ww + (qpp * Rfc * Pw)).to("K")
+        T_ww = (T_ww + (qpp / h_c)).to("K")
+
+        return T_wg, T_ww, UA_prime, qpp
+
 
 
     def solve(self, N: int = 60) -> Tuple[List[GasStream], List[WaterStream]]:
@@ -61,7 +76,6 @@ class StageSolver:
             self.stage.spec["qpp_hist"] = qpp_hist
             self.stage.spec["qpp_guess"] = qpp
 
-            A = self.stage.spec["inner_diameter"]
             qprime = UA_per_m_val * (g.T - Tw)
 
             cpg = cp_gas(g)

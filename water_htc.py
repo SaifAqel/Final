@@ -8,20 +8,33 @@ sigma = Q_(5.670374419e-8, "W/m^2/K^4")
 P_CRIT_WATER = Q_(22.064, "MPa")
 MW_WATER = 18.01528
 
-def film_temp(T_bulk: Q_, T_wall: Q_) -> Q_:
-    return 0.5 * (T_bulk + T_wall)
+def velocity(w: WaterStream, Aflow, umax_factor=None) -> Q_:
+    rho = WaterProps.rho_from_Ph(w.P, w.h)
+    u = (w.mass_flow / (rho * Aflow)).to("m/s")
+    if umax_factor is not None:
+        return (umax_factor * u).to("m/s")
+    return u
 
-def _is_boiling(w:WaterStream, T_wall: Q_ | None = None) -> bool:
-    hf = WaterProps.h_f(w.P)
-    hg = WaterProps.h_g(w.P)
-    if hf <= w.h <= hg:
-        return True
-    if (w.h < hf) and (T_wall is not None):
-        return T_wall > WaterProps.Tsat(w.P) + Q_(3, "K")
-    return False
+def reynolds_number(w:WaterStream, Aflow, char_len, umax_factor=None):
+    rho = WaterProps.rho_from_Ph(w.P, w.h)
+    v = velocity(w, Aflow, umax_factor)
+    mu = WaterProps.mu_from_Ph(w.P, w.h)
+    return (rho * v * char_len) / mu
 
 def prandtl_number(cp: Q_, mu: Q_, k: Q_) -> Q_:
     return cp * mu / k
+
+def film_temp(T_bulk: Q_, T_wall: Q_) -> Q_:
+    return 0.5 * (T_bulk + T_wall)
+
+def _is_boiling(P, h, T_wall: Q_ | None = None) -> bool:
+    hf = WaterProps.h_f(P)
+    hg = WaterProps.h_g(P)
+    if hf <= h <= hg:
+        return True
+    if (h < hf) and (T_wall is not None):
+        return T_wall > WaterProps.Tsat(P) + Q_(3, "K")
+    return False
 
 def pr(w:WaterStream) -> Q_:
     cp = WaterProps.cp_from_Ph(w.P, w.h)
@@ -34,29 +47,6 @@ def pr_s(w: WaterStream, T_wall: Q_) -> Q_:
     mu_s = WaterProps.mu_from_PT(w.P, T_wall)
     k_s = WaterProps.k_from_PT(w.P, T_wall)
     return prandtl_number(cp_s, mu_s, k_s)
-
-def velocity(w: WaterStream, Aflow, umax_factor=None) -> Q_:
-    rho = WaterProps.rho_from_Ph(w.P, w.h)
-    u = (w.mass_flow / (rho * Aflow)).to("m/s")
-    if umax_factor is not None:
-        return (umax_factor * u).to("m/s")
-    return u
-
-def reynolds_number(w:WaterStream, Aflow, char_len):
-    rho = WaterProps.rho_from_Ph(w.P, w.h)
-    v = velocity(w, Aflow)
-    mu = WaterProps.mu_from_Ph(w.P, w.h)
-    return (rho * v * char_len) / mu
-
-
-def nu_churchill_bernstein(Re: Q_, Pr: Q_) -> Q_:
-    # External crossflow over a single cylinder
-    Re = Re.to("").magnitude
-    Pr = Pr.to("").magnitude
-    a = 0.3
-    b = (0.62 * Re**0.5 * Pr**(1/3)) / (1 + (0.4/Pr)**(2/3))**0.25
-    c = (1 + (Re/282000.0)**(5/8))**(4/5)
-    return Q_(a + b * c, "")
 
 def nu_zukauskas_bank(Re: Q_, Pr: Q_, Pr_s: Q_, arrangement: str) -> tuple[Q_, Q_]:
     # Zukauskas correlation for crossflow over tube banks, ε = (Pr/Pr_s)^0.25
@@ -83,6 +73,19 @@ def nu_zukauskas_bank(Re: Q_, Pr: Q_, Pr_s: Q_, arrangement: str) -> tuple[Q_, Q
     nu = C * (Re**m) * (Pr**n) * ((Pr / max(Pr_s, 1e-12))**s)
     return Q_(nu, ""),Q_(m, "")
 
+
+
+def nu_churchill_bernstein(Re: Q_, Pr: Q_) -> Q_:
+    # External crossflow over a single cylinder
+    Re = Re.to("").magnitude
+    Pr = Pr.to("").magnitude
+    a = 0.3
+    b = (0.62 * Re**0.5 * Pr**(1/3)) / (1 + (0.4/Pr)**(2/3))**0.25
+    c = (1 + (Re/282000.0)**(5/8))**(4/5)
+    return Q_(a + b * c, "")
+
+
+
 def nu_gnielinski(Re: Q_, Pr: Q_, mu_ratio: Q_, L: Q_, D: Q_) -> Q_:
     Re = Re.to("").magnitude
     Pr = Pr.to("").magnitude
@@ -103,15 +106,17 @@ def compute_nusselt(w:WaterStream, stage: HXStage, T_wall: Q_) -> Q_:
 
     if stage.kind == "single_tube":
         L = stage.spec["outer_diameter"]
-        Aflow = stage.spec["cold_Ai"]
-        Re = reynolds_number(w, Aflow, L)
+        Aflow = stage.spec["cold_flow_A"]
+        umax = stage.spec.get("umax_factor")
+        Re = reynolds_number(w, Aflow, L, umax)
         Pr = pr(w)
         return nu_churchill_bernstein(Re, Pr)
 
     if stage.kind == "tube_bank":
         L = stage.spec["outer_diameter"]
-        Aflow = stage.spec["cold_Ai"]
-        Re = reynolds_number(w, Aflow, L)
+        Aflow = stage.spec["cold_flow_A"]
+        umax = stage.spec.get("umax_factor")
+        Re = reynolds_number(w, Aflow, L, umax)
         Pr = pr(w)
         Pr_s = pr_s(w, T_wall)
         N_rows = stage.spec["N_rows"]
@@ -125,8 +130,9 @@ def compute_nusselt(w:WaterStream, stage: HXStage, T_wall: Q_) -> Q_:
 
     if stage.kind == "reversal_chamber":
         L = stage.spec["outer_diameter"]
-        Aflow = stage.spec["cold_Ai"]
-        Re = reynolds_number(w, Aflow, L)
+        Aflow = stage.spec["cold_flow_A"]
+        umax = stage.spec.get("umax_factor")
+        Re = reynolds_number(w, Aflow, L, umax)
         Pr = pr(w)
         Rc = stage.spec["curvature_radius"]
         # approximate as single cylinder with optional bump
@@ -136,9 +142,10 @@ def compute_nusselt(w:WaterStream, stage: HXStage, T_wall: Q_) -> Q_:
     if stage.kind == "economiser":
         D = stage.spec["inner_diameter"]
         L = stage.spec["inner_length"]
-        Aflow = stage.spec["cold_Ai"]
+        Aflow = stage.spec["cold_flow_A"]
         T_bulk = WaterProps.T_from_Ph(w.P, w.h)
-        Re = reynolds_number(w, Aflow, D)
+        umax = stage.spec.get("umax_factor")
+        Re = reynolds_number(w, Aflow, D, umax)
         Pr = pr(w)
         mu_ratio = _mu_ratio(w, T_bulk, T_wall)
         return nu_gnielinski(Re, Pr, mu_ratio, L, D)
@@ -202,12 +209,12 @@ def _h_water_boil_cooper(P: Q_, qpp: Q_, Rp: Q_) -> Q_:
     return Q_(h_kWm2K, "kW/m^2/K").to("W/m^2/K")
 
 def water_htc(w: WaterStream, stage: HXStage, T_wall: Q_, qpp: Q_) -> tuple[Q_, bool]:
-    boiling = _is_boiling(w, T_wall)
+    boiling = _is_boiling(w.P, w.h, T_wall)
     if boiling:
         h_lo = _h_liquid_only(w, stage, T_wall)
         h_nb = _h_water_boil_cooper(w.P, qpp, stage.spec["roughness_out"])
         T_sat, rho_l, mu_l, k_l, cp_l = _liq_props_at_P(w.P)
-        A = stage.spec["cold_Ai"]
+        A = stage.spec["cold_flow_A"]
         G = _mass_flux(w, A)
         h_lv = WaterProps.h_g(w.P) - WaterProps.h_f(w.P)
         x = WaterProps.quality_from_Ph(w.P, w.h) or 0.0
@@ -238,11 +245,11 @@ def _h_liquid_only(w: WaterStream, stage: HXStage, T_wall: Q_) -> Q_:
     if stage.kind in ("economiser",):      # internal flow
         D_h = stage.spec["inner_diameter"]
         L   = stage.spec["inner_length"]
-        A   = stage.spec["cold_Ai"]
+        A   = stage.spec["cold_flow_A"]
     elif stage.kind in ("tube_bank", "single_tube", "reversal_chamber"):
         D_h = stage.spec["outer_diameter"]
         L   = D_h
-        A   = stage.spec["cold_Ai"]
+        A   = stage.spec["cold_flow_A"]
     else:
         raise ValueError(f"unknown stage kind: {stage.kind}")
 
