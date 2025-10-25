@@ -3,8 +3,6 @@ from units import Q_
 from models import WaterStream, HXStage
 from props import WaterProps
 
-sigma = Q_(5.670374419e-8, "W/m^2/K^4")
-
 P_CRIT_WATER = Q_(22.064, "MPa")
 MW_WATER = 18.01528
 

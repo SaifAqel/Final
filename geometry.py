@@ -59,7 +59,7 @@ class GeometryBuilder:
                 outer_diameter = (inner_diameter + 2*wall_t).to("m")
                 bundle_width = Q_(n_cols, "") * ST
 
-                Ds = spec["shell_inner_diameter"].to("m")
+                Ds = self.drum.Di
                 B  = spec["baffle_spacing"].to("m")
                 pt = spec["ST"].to("m")
                 do = (inner_diameter + 2*wall_t).to("m")
