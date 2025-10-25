@@ -4,9 +4,10 @@ import logging
 from logging_utils import _fmt
 from units import Q_
 from models import HXStage, GasStream, WaterStream
-from physics import cp_gas, gas_htc, wall_resistance, fouling_resistances
+from physics import wall_resistance, fouling_resistances
 from water_htc import water_htc
 from props import WaterProps
+from gas_htc import gas_htc, cp_gas
 
 log = logging.getLogger("solver")
 
@@ -19,7 +20,7 @@ class StageSolver:
     @staticmethod
     def solve_step(g, w, stage, Tgw_guess, Tww_guess, qprime_guess):
         spec = stage.spec
-        Pg = spec["inner_perimeter"]
+        Pg = spec["hot_wet_P"]
         Pw = spec["cold_wet_P"]
         Tg = g.T
         Tw = WaterProps.T_from_Ph(w.P, w.h)

@@ -239,18 +239,9 @@ def _mass_flux(w: WaterStream, Aflow: Q_) -> Q_:
 
 # ---- convective liquid-only HTC at Tsat(P) ----
 def _h_liquid_only(w: WaterStream, stage: HXStage, T_wall: Q_) -> Q_:
-    # choose hydraulic diameter and flow area
-    if stage.kind in ("economiser",):      # internal flow
-        D_h = stage.spec["inner_diameter"]
-        L   = stage.spec["inner_length"]
-        A   = stage.spec["cold_flow_A"]
-    elif stage.kind in ("tube_bank", "single_tube", "reversal_chamber"):
-        D_h = stage.spec["outer_diameter"]
-        L   = D_h
-        A   = stage.spec["cold_flow_A"]
-    else:
-        raise ValueError(f"unknown stage kind: {stage.kind}")
-
+    D_h = stage.spec["cold_Dh"]
+    L   = stage.spec["inner_length"]
+    A   = stage.spec["cold_flow_A"]
     T_sat, rho_l, mu_l, k_l, cp_l = _liq_props_at_P(w.P)
     G   = _mass_flux(w, A)
     Re  = (G * D_h / mu_l).to("")                 # liquid-only
