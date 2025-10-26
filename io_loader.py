@@ -59,6 +59,7 @@ def load_config(stages_path: str, streams_path: str | None = None, drum_path: st
         if "arrangement" in node:      spec["arrangement"]      = str(node["arrangement"])
         if "N_rows" in node:           spec["N_rows"]           = _q(node["N_rows"])
         if "baffle_spacing" in node:   spec["baffle_spacing"]   = _q(node["baffle_spacing"])
+        if "shell_inner_diameter" in node: spec["shell_inner_diameter"] = _q(node["shell_inner_diameter"])
 
         _wall_to_spec(_get(node, "wall"), spec)
         _map_nozzles(node, spec)

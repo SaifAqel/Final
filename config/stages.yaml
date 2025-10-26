@@ -131,6 +131,15 @@ stages:
     inner_diameter: { value: 0.076, unit: m }
     inner_length: { value: 5.620, unit: m }
     tubes_number: { value: 100, unit: dimensionless }
+    layout: "triangular"
+    arrangement: "inline"
+    N_rows: { value: 4, unit: dimensionless }
+    ST: { value: 0.123, unit: m }
+    SL: { value: 0.123, unit: m }
+    baffle_spacing: { value: 0.105, unit: m }
+    shell_inner_diameter: { value: 1.80, unit: m } # Ds
+    baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
+    bundle_clearance: { value: 0.010, unit: m }
     wall:
       thickness: { value: 0.0029, unit: m }
       conductivity: { value: 16, unit: W/m/K }

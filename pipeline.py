@@ -30,6 +30,6 @@ class SixStageCounterflow:
 
             # next-stage inlets: hot takes last of g_list; cold takes index 0 of w_list (counterflow)
             g_cur = replace(g_list[-1])
-            w_cur = replace(w_list[0])
+            w_cur = replace(w_list[-1])
             log.info("stage-end", extra={"stage": stg.name, "step": "end"})
         return gas_hist, water_hist

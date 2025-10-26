@@ -44,13 +44,14 @@ class GeometryBuilder:
                 Nt = spec["tubes_number"].to("")
                 Do_t = (Di_t + 2*t).to("m")
 
-                Ds = self.drum.Di.to("m")
+                Ds = spec["shell_inner_diameter"].to("m")
                 B  = spec["baffle_spacing"].to("m")
                 pt = spec["ST"].to("m")
 
                 FAR = (1 - (Do_t/pt)).to("dimensionless")
-                A_cross = (Ds * B * FAR).to("m^2")
-                spec["umax_factor"] = ((Ds * B) / A_cross).to("dimensionless")
+                A_gross = (Ds * B).to("m^2")
+                A_cross = (A_gross * FAR).to("m^2")
+                spec["umax_factor"] = (A_gross / A_cross).to("dimensionless")  # = 1/FAR
                 spec["roughness_cold_surface"] = spec["roughness_out"]
                 spec["outer_diameter"] = Do_t
 
@@ -59,7 +60,7 @@ class GeometryBuilder:
                 A_tube_out = (pi * (Do_t/2)**2).to("m^2")
 
                 cold_wet_P = (Nt * pi * Do_t).to("m")
-                cold_flow_A = (A_drum - Nt * A_tube_out).to("m^2")
+                cold_flow_A = A_gross
                 cold_Dh = (4 * cold_flow_A / cold_wet_P).to("m")
 
                 hot_wet_P = (Nt * pi * Di_t).to("m")
