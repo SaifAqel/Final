@@ -1,9 +1,6 @@
-# radiation.py
-from math import exp
 from units import Q_
-from models import GasStream, HXStage
+from models import GasStream
 from props import GasProps
-from math import pi
 import numpy as np
 from typing import Dict, Any
 
