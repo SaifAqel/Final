@@ -20,7 +20,7 @@ if __name__ == "__main__":
     pipe = SixStageCounterflow(stages)
     gh, wh = pipe.run(gas, water)
 
-    g_out, w_out = gh[-1], wh[-1]
+    g_out, w_out = gh[-1], wh[0]
     logging.getLogger("main").info("done", extra={"stage": stages[-1].name, "step": "outlet"})
     print(f"Stages: {len(stages)}")
     print(f"Gas T_out: {g_out.T:.3f~P}") 
