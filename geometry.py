@@ -60,7 +60,7 @@ class GeometryBuilder:
                 A_tube_out = (pi * (Do_t/2)**2).to("m^2")
 
                 cold_wet_P = (Nt * pi * Do_t).to("m")
-                cold_flow_A = A_gross
+                cold_flow_A = A_cross
                 cold_Dh = (4 * cold_flow_A / cold_wet_P).to("m")
 
                 hot_wet_P = (Nt * pi * Di_t).to("m")
