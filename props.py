@@ -56,22 +56,23 @@ class WaterProps:
     def cp_from_Ph(P: Q_, h: Q_) -> Q_:  return Q_(WaterProps._Ph(P,h).cp, "kJ/kg/K").to("J/kg/K")
 
     @staticmethod
-    def quality_from_Ph(P: Q_, h: Q_) -> Optional[Q_]:
+    def quality_from_Ph(P: Q_, h: Q_) -> Q_ | None:
         Pcrit = Q_(22.064, "MPa")
         if P >= Pcrit:
             return None
         hf = WaterProps.h_f(P)     # J/kg
         hg = WaterProps.h_g(P)     # J/kg
-        dh = (hg - hf)
-        if abs(dh.m) < 1e-9:
+        dh = hg - hf
+        if abs(dh.to("J/kg").magnitude) < 1e-9:
             return None
 
-        x = ((h - hf) / dh).to("")
-        if x.magnitude < -1e-6 or x.magnitude > 1 + 1e-6:
+        x = ((h - hf) / dh).to("")  # dimensionless
+        xm = x.magnitude
+        if xm < -1e-6 or xm > 1 + 1e-6:
             return None
 
         # clamp to [0,1]
-        xm = min(1.0, max(0.0, x.magnitude))
+        xm = min(1.0, max(0.0, xm))
         return Q_(xm, "")
 
     # saturation

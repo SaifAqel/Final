@@ -57,16 +57,6 @@ class StageSolver:
             Tgw = (alpha*Tgw_new + (1-alpha)*Tgw).to("K")
             Tww = (alpha*Tww_new + (1-alpha)*Tww).to("K")
             qprime = (alpha*qprime_new + (1-alpha)*qprime).to("W/m")
-        
-        h_g = gas_htc(g, spec, Tgw)
-        qpp_cold = (qprime / Pw).to("W/m^2")
-        h_c, boiling = water_htc(w, stage, Tww, qpp_cold)
-        Rfg, Rfc = fouling_resistances(spec)
-        Rw = wall_resistance(spec)
-        Rg = (1/(h_g*Pg)).to("K*m/W")
-        Rc = (1/(h_c*Pw)).to("K*m/W")
-        UA_prime = (1/(Rg + Rfg + Rw + Rfc + Rc)).to("W/K/m")
-        qprime = (UA_prime * (Tg - Tw)).to("W/m")
 
         return Tgw, Tww, UA_prime, qprime, boiling
 
@@ -77,8 +67,6 @@ class StageSolver:
         g = self.gas
         w = self.water
 
-        Tw = WaterProps.T_from_Ph(w.P, w.h)
-
         gas_hist: List[GasStream] = [g]
         water_hist: List[WaterStream] = [w]
         qprime_hist = []
@@ -86,17 +74,11 @@ class StageSolver:
         Tww_hist = []
 
         for i in range(N):
-            if qprime_hist:
-                qprime_guess = qprime_hist[-1]
-            if Tgw_hist:
-                Tgw_guess = Tgw_hist[-1]
-            if Tww_hist:
-                Tww_guess = Tww_hist[-1]
-            else:
-                Tgw_guess = g.T
-                Tww_guess = Tw
-                qprime_guess = Q_(1e-9, "W/m")
-                
+            Tw = WaterProps.T_from_Ph(w.P, w.h)
+            qprime_guess = qprime_hist[-1] if qprime_hist else Q_(1e-9, "W/m")
+            Tgw_guess    = Tgw_hist[-1]     if Tgw_hist    else g.T
+            Tww_guess    = Tww_hist[-1]     if Tww_hist    else Tw
+
             Tgw, Tww, UA_prime, qprime, boiling = self.solve_step(g, w, self.stage, Tgw_guess, Tww_guess, qprime_guess)
             qprime_hist.append(qprime)
             Tgw_hist.append(Tgw)

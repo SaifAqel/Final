@@ -12,9 +12,8 @@ _gas = GasProps(mech_path="config/flue_cantera.yaml", phase="gas_mix")
 def cp_gas(g: GasStream) -> Q_:    return _gas.cp(g.T, g.P, g.comp or {})
 
 def _mean_beam_length(spec: dict) -> Q_:
-    A = spec["hot_flow_A"].to("m^2")
-    P = spec["hot_wet_P"].to("m")
-    return (Q_(3.6, "") * (A / P)).to("m")
+    Dh = spec["hot_Dh"].to("m")
+    return (0.9 * Dh).to("m")
 
 def _gas_partials(g: GasStream) -> tuple[float, float]:
     P = g.P.to("Pa").magnitude

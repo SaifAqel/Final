@@ -2,6 +2,8 @@ from math import log, sqrt, exp, log10
 from units import Q_
 from models import WaterStream, HXStage
 from props import WaterProps
+from typing import Tuple
+
 
 P_CRIT_WATER = Q_(22.064, "MPa")
 MW_WATER = 18.01528
@@ -211,71 +213,70 @@ def water_htc(w: WaterStream, stage: HXStage, T_wall: Q_, qpp: Q_) -> tuple[Q_, 
     if boiling:
         h_lo = _h_liquid_only(w, stage, T_wall)
         h_nb = _h_water_boil_cooper(w.P, qpp, stage.spec["roughness_cold_surface"])
-        T_sat, rho_l, mu_l, k_l, cp_l = _liq_props_at_P(w.P)
+        T_sat = WaterProps.Tsat(w.P)
+        mu_l  = WaterProps.mu_from_PT(w.P, T_sat)
         A = stage.spec["cold_flow_A"]
+        Dh = stage.spec["cold_Dh"]
         G = _mass_flux(w, A)
         h_lv = WaterProps.h_g(w.P) - WaterProps.h_f(w.P)
-        x = WaterProps.quality_from_Ph(w.P, w.h) or 0.0
-        Re_lo = (G * stage.spec["outer_diameter"] / mu_l).to("")
-
-        F = _chen_F_factor(Re_lo, x)
-        S = _chen_S_factor(qpp, G, h_lv, x)
+        x = WaterProps.quality_from_Ph(w.P, w.h)
+        Re_lo = (G * Dh / mu_l).to("")
+        S = _chen_S_factor(qpp, G, h_lv, Re_lo)
+        if x is not None:
+            F = _chen_F_factor(w.P, x)
+        else:
+            F = 1
         h_c = F * h_lo + S * h_nb
     else:
         h_c = _h_water_singlephase(w, stage, T_wall)
     return h_c, boiling
 
-# ---- helpers: saturated-liquid props at P ----
-def _liq_props_at_P(P: Q_):
-    T_sat = WaterProps.Tsat(P)
-    rho_l = WaterProps.rho_from_Px(P, Q_(0.0, ""))   # Q=0
-    mu_l  = WaterProps.mu_from_PT(P, T_sat)
-    k_l   = WaterProps.k_from_PT(P, T_sat)
-    cp_l  = WaterProps.cp_from_PT(P, T_sat)
-    return T_sat, rho_l, mu_l, k_l, cp_l
-
 def _mass_flux(w: WaterStream, Aflow: Q_) -> Q_:
     return (w.mass_flow / Aflow).to("kg/m^2/s")
 
-# ---- convective liquid-only HTC at Tsat(P) ----
 def _h_liquid_only(w: WaterStream, stage: HXStage, T_wall: Q_) -> Q_:
     D_h = stage.spec["cold_Dh"]
     L   = stage.spec["inner_length"]
     A   = stage.spec["cold_flow_A"]
-    T_sat, rho_l, mu_l, k_l, cp_l = _liq_props_at_P(w.P)
+    T_sat = WaterProps.Tsat(w.P)
+    mu_l  = WaterProps.mu_from_PT(w.P, T_sat)
+    k_l   = WaterProps.k_from_PT(w.P, T_sat)
+    cp_l  = WaterProps.cp_from_PT(w.P, T_sat)
     G   = _mass_flux(w, A)
-    Re  = (G * D_h / mu_l).to("")                 # liquid-only
+    Re_lo  = (G * D_h / mu_l).to("")
     Pr  = prandtl_number(cp_l, mu_l, k_l).to("")
     # wall/bulk viscosity ratio at Tsat
     mu_ratio = (mu_l / WaterProps.mu_from_PT(w.P, T_wall)).to("")
 
     if stage.kind == "economiser":
-        Nu = nu_gnielinski(Re, Pr, mu_ratio, L, D_h)
+        Nu = nu_gnielinski(Re_lo, Pr, mu_ratio, L, D_h)
     elif stage.kind == "tube_bank":
         # need Pr_s at wall
         Pr_s = prandtl_number(cp_l, WaterProps.mu_from_PT(w.P, T_wall), WaterProps.k_from_PT(w.P, T_wall))
-        Nu, m = nu_zukauskas_bank(Re, Pr, Pr_s, stage.spec["arrangement"])
+        Nu, m = nu_zukauskas_bank(Re_lo, Pr, Pr_s, stage.spec["arrangement"])
         Nu *= bank_row_factor(stage.spec["N_rows"])
         Nu *= spacing_factor(D_h, stage.spec["ST"], stage.spec["SL"], stage.spec["arrangement"], m)
     else:
-        Nu = nu_churchill_bernstein(Re, Pr)
+        Nu = nu_churchill_bernstein(Re_lo, Pr)
 
     return (Nu * k_l / D_h).to("W/m^2/K")
 
-# ---- Chen correlation modifiers ----
+def _martinelli_Xtt(P: Q_, x: float) -> float:
+    T_sat = WaterProps.Tsat(P)
+    rho_l = WaterProps.rho_from_Px(P, Q_(0.0, ""))    # saturated liquid
+    rho_g = WaterProps.rho_from_Px(P, Q_(1.0, ""))    # saturated vapor
+    mu_l  = WaterProps.mu_from_PT(P, T_sat)
+    mu_g  = WaterProps.mu_from_PT(P, T_sat)           # IAPWS μ(T,P) handles both phases
+    mu_ratio  = (mu_l / mu_g).to("").magnitude
+    rho_ratio = (rho_g / rho_l).to("").magnitude
+    return ((1 - x) / x) ** 0.9 * (mu_ratio ** 0.1) * (rho_ratio ** 0.5)
 
-def _chen_F_factor(Re_lo: Q_, x: float) -> Q_:
-    """Convective enhancement factor."""
-    Re = Re_lo.to("").magnitude
-    Xtt = max((1e-6 + (1 - x) / max(x, 1e-6)) ** 0.9, 1e-6)  # placeholder Martinelli-type scaling
-    F = (1 + 0.55 * (1 / max(Xtt, 1e-6)) ** 0.1)  # increases with vapor fraction
-    return Q_(F, "")
-
-
-def _chen_S_factor(qpp: Q_, G: Q_, h_lv: Q_, x: float) -> Q_:
-    """Nucleate boiling suppression factor."""
-    # Boiling number Bo = q'' / (G * h_lv)
-    Bo = (abs(qpp) / (G * h_lv)).to("").magnitude
-    S = 1.0 / (1.0 + 2.53e-6 * (Bo ** -1.17))  # Chen’s empirical suppression
-    # bound [0.1,1]
+def _chen_S_factor(qpp: Q_, G: Q_, h_lv: Q_, Re_lo: Q_) -> Q_:
+    Re = max(1.0, Re_lo.to("").magnitude)
+    S = 1.0 / (1.0 + 2.53e-6 * (Re ** 1.17))
     return Q_(max(0.1, min(S, 1.0)), "")
+
+def _chen_F_factor(P: Q_, x: float) -> Q_:
+    Xtt = _martinelli_Xtt(P, x)
+    F = 1.0 + 0.12 * (max(1e-6, 1.0 / Xtt) ** 0.8)
+    return Q_(min(5.0, max(1.0, F)), "")
