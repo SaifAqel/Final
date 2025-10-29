@@ -18,139 +18,139 @@ stages:
           fouling_thickness: { value: 0.0001, unit: m }
           fouling_conductivity: { value: 0.20, unit: W/m/K }
 
-  HX_2:
-    kind: "reversal_chamber"
-    inner_diameter: { value: 1.6, unit: m }
-    inner_length: { value: 0.8, unit: m }
-    curvature_radius: { value: 0.8, unit: m }
-    nozzles:
-      inlet:
-        k: { value: 1, unit: dimensionless }
-      outlet:
-        k: { value: 1, unit: dimensionless }
-    wall:
-      thickness: { value: 0.0029, unit: m }
-      conductivity: { value: 16, unit: W/m/K }
-      surfaces:
-        inner:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.30, unit: dimensionless }
-          fouling_thickness: { value: 0.0001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
-        outer:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.80, unit: dimensionless }
-          fouling_thickness: { value: 0.0001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
+  # HX_2:
+  #   kind: "reversal_chamber"
+  #   inner_diameter: { value: 1.6, unit: m }
+  #   inner_length: { value: 0.8, unit: m }
+  #   curvature_radius: { value: 0.8, unit: m }
+  #   nozzles:
+  #     inlet:
+  #       k: { value: 1, unit: dimensionless }
+  #     outlet:
+  #       k: { value: 1, unit: dimensionless }
+  #   wall:
+  #     thickness: { value: 0.0029, unit: m }
+  #     conductivity: { value: 16, unit: W/m/K }
+  #     surfaces:
+  #       inner:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.30, unit: dimensionless }
+  #         fouling_thickness: { value: 0.0001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }
+  #       outer:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.80, unit: dimensionless }
+  #         fouling_thickness: { value: 0.0001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }
 
-  HX_3:
-    kind: "tube_bank"
-    inner_diameter: { value: 0.076, unit: m }
-    inner_length: { value: 4.975, unit: m }
-    tubes_number: { value: 118, unit: dimensionless }
-    layout: "triangular"
-    arrangement: "inline"
-    N_rows: { value: 4, unit: dimensionless }
-    ST: { value: 0.123, unit: m }
-    SL: { value: 0.123, unit: m }
-    baffle_spacing: { value: 0.105, unit: m }
-    shell_inner_diameter: { value: 1.80, unit: m } # Ds
-    baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
-    bundle_clearance: { value: 0.010, unit: m }
-    wall:
-      thickness: { value: 0.0029, unit: m }
-      conductivity: { value: 16, unit: W/m/K }
-      surfaces:
-        inner:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.30, unit: dimensionless }
-          fouling_thickness: { value: 0.001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
-        outer:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.80, unit: dimensionless }
-          fouling_thickness: { value: 0.0001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
+  # HX_3:
+  #   kind: "tube_bank"
+  #   inner_diameter: { value: 0.076, unit: m }
+  #   inner_length: { value: 4.975, unit: m }
+  #   tubes_number: { value: 118, unit: dimensionless }
+  #   layout: "triangular"
+  #   arrangement: "inline"
+  #   N_rows: { value: 4, unit: dimensionless }
+  #   ST: { value: 0.123, unit: m }
+  #   SL: { value: 0.123, unit: m }
+  #   baffle_spacing: { value: 0.105, unit: m }
+  #   shell_inner_diameter: { value: 1.80, unit: m } # Ds
+  #   baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
+  #   bundle_clearance: { value: 0.010, unit: m }
+  #   wall:
+  #     thickness: { value: 0.0029, unit: m }
+  #     conductivity: { value: 16, unit: W/m/K }
+  #     surfaces:
+  #       inner:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.30, unit: dimensionless }
+  #         fouling_thickness: { value: 0.001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }
+  #       outer:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.80, unit: dimensionless }
+  #         fouling_thickness: { value: 0.0001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }
 
-  HX_4:
-    kind: "reversal_chamber"
-    inner_diameter: { value: 1.6, unit: m }
-    inner_length: { value: 0.8, unit: m }
-    curvature_radius: { value: 0.8, unit: m }
-    nozzles:
-      inlet:
-        k: { value: 1, unit: dimensionless }
-      outlet:
-        k: { value: 1, unit: dimensionless }
-    wall:
-      thickness: { value: 0.0029, unit: m }
-      conductivity: { value: 16, unit: W/m/K }
-      surfaces:
-        inner:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.30, unit: dimensionless }
-          fouling_thickness: { value: 0.0001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
-        outer:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.80, unit: dimensionless }
-          fouling_thickness: { value: 0.0001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
+  # HX_4:
+  #   kind: "reversal_chamber"
+  #   inner_diameter: { value: 1.6, unit: m }
+  #   inner_length: { value: 0.8, unit: m }
+  #   curvature_radius: { value: 0.8, unit: m }
+  #   nozzles:
+  #     inlet:
+  #       k: { value: 1, unit: dimensionless }
+  #     outlet:
+  #       k: { value: 1, unit: dimensionless }
+  #   wall:
+  #     thickness: { value: 0.0029, unit: m }
+  #     conductivity: { value: 16, unit: W/m/K }
+  #     surfaces:
+  #       inner:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.30, unit: dimensionless }
+  #         fouling_thickness: { value: 0.0001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }
+  #       outer:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.80, unit: dimensionless }
+  #         fouling_thickness: { value: 0.0001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }
 
-  HX_5:
-    kind: "tube_bank"
-    inner_diameter: { value: 0.076, unit: m }
-    inner_length: { value: 5.620, unit: m }
-    tubes_number: { value: 100, unit: dimensionless }
-    layout: "triangular"
-    arrangement: "inline"
-    N_rows: { value: 4, unit: dimensionless }
-    ST: { value: 0.123, unit: m }
-    SL: { value: 0.123, unit: m }
-    baffle_spacing: { value: 0.105, unit: m }
-    shell_inner_diameter: { value: 1.80, unit: m } # Ds
-    baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
-    bundle_clearance: { value: 0.010, unit: m }
-    wall:
-      thickness: { value: 0.0029, unit: m }
-      conductivity: { value: 16, unit: W/m/K }
-      surfaces:
-        inner:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.30, unit: dimensionless }
-          fouling_thickness: { value: 0.0001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
-        outer:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.80, unit: dimensionless }
-          fouling_thickness: { value: 0.0001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
+  # HX_5:
+  #   kind: "tube_bank"
+  #   inner_diameter: { value: 0.076, unit: m }
+  #   inner_length: { value: 5.620, unit: m }
+  #   tubes_number: { value: 100, unit: dimensionless }
+  #   layout: "triangular"
+  #   arrangement: "inline"
+  #   N_rows: { value: 4, unit: dimensionless }
+  #   ST: { value: 0.123, unit: m }
+  #   SL: { value: 0.123, unit: m }
+  #   baffle_spacing: { value: 0.105, unit: m }
+  #   shell_inner_diameter: { value: 1.80, unit: m } # Ds
+  #   baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
+  #   bundle_clearance: { value: 0.010, unit: m }
+  #   wall:
+  #     thickness: { value: 0.0029, unit: m }
+  #     conductivity: { value: 16, unit: W/m/K }
+  #     surfaces:
+  #       inner:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.30, unit: dimensionless }
+  #         fouling_thickness: { value: 0.0001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }
+  #       outer:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.80, unit: dimensionless }
+  #         fouling_thickness: { value: 0.0001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }
 
-  HX_6:
-    kind: "economiser"
-    inner_diameter: { value: 0.076, unit: m }
-    inner_length: { value: 5.620, unit: m }
-    tubes_number: { value: 100, unit: dimensionless }
-    layout: "triangular"
-    arrangement: "inline"
-    N_rows: { value: 4, unit: dimensionless }
-    ST: { value: 0.123, unit: m }
-    SL: { value: 0.123, unit: m }
-    baffle_spacing: { value: 0.105, unit: m }
-    shell_inner_diameter: { value: 1.80, unit: m } # Ds
-    baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
-    bundle_clearance: { value: 0.010, unit: m }
-    wall:
-      thickness: { value: 0.0029, unit: m }
-      conductivity: { value: 16, unit: W/m/K }
-      surfaces:
-        inner:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.30, unit: dimensionless }
-          fouling_thickness: { value: 0.0001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
-        outer:
-          roughness: { value: 0.5, unit: micrometer }
-          emissivity: { value: 0.80, unit: dimensionless }
-          fouling_thickness: { value: 0.0001, unit: m }
-          fouling_conductivity: { value: 0.20, unit: W/m/K }
+  # HX_6:
+  #   kind: "economiser"
+  #   inner_diameter: { value: 0.076, unit: m }
+  #   inner_length: { value: 5.620, unit: m }
+  #   tubes_number: { value: 100, unit: dimensionless }
+  #   layout: "triangular"
+  #   arrangement: "inline"
+  #   N_rows: { value: 4, unit: dimensionless }
+  #   ST: { value: 0.123, unit: m }
+  #   SL: { value: 0.123, unit: m }
+  #   baffle_spacing: { value: 0.105, unit: m }
+  #   shell_inner_diameter: { value: 1.80, unit: m } # Ds
+  #   baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
+  #   bundle_clearance: { value: 0.010, unit: m }
+  #   wall:
+  #     thickness: { value: 0.0029, unit: m }
+  #     conductivity: { value: 16, unit: W/m/K }
+  #     surfaces:
+  #       inner:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.30, unit: dimensionless }
+  #         fouling_thickness: { value: 0.0001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }
+  #       outer:
+  #         roughness: { value: 0.5, unit: micrometer }
+  #         emissivity: { value: 0.80, unit: dimensionless }
+  #         fouling_thickness: { value: 0.0001, unit: m }
+  #         fouling_conductivity: { value: 0.20, unit: W/m/K }

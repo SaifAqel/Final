@@ -1,13 +1,14 @@
 from dataclasses import replace
-from typing import List, Tuple
-import logging
-from logging_utils import _fmt
+from typing import List, Optional, Tuple
+from results import StepResult
 from units import Q_
 from models import HXStage, GasStream, WaterStream
 from physics import wall_resistance, fouling_resistances
 from water_htc import water_htc
 from props import WaterProps
 from gas_htc import gas_htc, cp_gas
+import numpy as np
+import logging
 
 log = logging.getLogger("solver")
 
@@ -16,14 +17,13 @@ class StageSolver:
         self.stage = stage
         self.gas = replace(gas, stage=stage.name)
         self.water = replace(water, stage=stage.name)
-
     @staticmethod
-    def solve_step(g, w, stage, Tgw_guess, Tww_guess, qprime_guess):
+    def solve_step(g, w, stage, Tgw_guess, Tww_guess, qprime_guess, i: Optional[int]=None, x: Optional[Q_]=None, dx: Optional[Q_]=None) -> StepResult:
         spec = stage.spec
-        Pg = spec["hot_wet_P"]
-        Pw = spec["cold_wet_P"]
-        Tg = g.T
-        Tw = WaterProps.T_from_Ph(w.P, w.h)
+        Pg = spec["hot_wet_P"]     # [m]
+        Pw = spec["cold_wet_P"]    # [m]
+        Tg = g.T                   # bulk gas [K]
+        Tw = WaterProps.T_from_Ph(w.P, w.h)  # bulk water [K]
         Tgw = Tgw_guess
         Tww = Tww_guess
         qprime = qprime_guess
@@ -39,7 +39,7 @@ class StageSolver:
             Rg = (1/(h_g*Pg)).to("K*m/W")
             Rc = (1/(h_c*Pw)).to("K*m/W")
 
-            UA_prime = (1/(Rg + Rfg + Rw + Rfc + Rc)).to("W/K/m")
+            UA_prime = (1/(Rg + Rfg + Rw + Rfc + Rc)).to("W/K/m")   # per-unit-length UA
 
             qprime_new = (UA_prime * (Tg - Tw)).to("W/m")
 
@@ -51,65 +51,23 @@ class StageSolver:
 
             dTgw = abs(Tgw_new - Tgw); dTww = abs(Tww_new - Tww); dq = abs(qprime_new - qprime)
             if dTgw < tolT and dTww < tolT and dq < tolq:
-                Tgw, Tww, qprime = Tgw_new, Tww_new, qprime_new   # use actual converged values
+                Tgw, Tww, qprime = Tgw_new, Tww_new, qprime_new
                 break
 
             Tgw = (alpha*Tgw_new + (1-alpha)*Tgw).to("K")
             Tww = (alpha*Tww_new + (1-alpha)*Tww).to("K")
             qprime = (alpha*qprime_new + (1-alpha)*qprime).to("W/m")
 
-        return Tgw, Tww, UA_prime, qprime, boiling
+        return StepResult(
+            i=i, x=x, dx=dx,
+            gas=g, water=w,
+            Tgw=Tgw, Tww=Tww,
+            UA_prime=UA_prime,
+            qprime=qprime,
+            boiling=boiling
+        )
 
-    def solve(self, N: int = 60) -> Tuple[List[GasStream], List[WaterStream]]:
-        L: Q_ = self.stage.spec["inner_length"].to("m")
-        dx: Q_ = (L / N).to("m")
 
-        g = self.gas
-        w = self.water
-
-        gas_hist: List[GasStream] = [g]
-        water_hist: List[WaterStream] = [w]
-        qprime_hist = []
-        Tgw_hist = []
-        Tww_hist = []
-
-        for i in range(N):
-            Tw = WaterProps.T_from_Ph(w.P, w.h)
-            qprime_guess = qprime_hist[-1] if qprime_hist else Q_(1e-9, "W/m")
-            Tgw_guess    = Tgw_hist[-1]     if Tgw_hist    else g.T
-            Tww_guess    = Tww_hist[-1]     if Tww_hist    else Tw
-
-            Tgw, Tww, UA_prime, qprime, boiling = self.solve_step(g, w, self.stage, Tgw_guess, Tww_guess, qprime_guess)
-            qprime_hist.append(qprime)
-            Tgw_hist.append(Tgw)
-            Tww_hist.append(Tww)
-
-            cpg = cp_gas(g)
-            dTgdx = - qprime / (g.mass_flow * cpg)
-            dpgdx = Q_(0.0, "Pa/m")
-            dhwdx = (qprime / w.mass_flow).to("J/kg/m")
-
-            T_next = (g.T + dTgdx * dx).to("K")
-            P_next = (g.P + dpgdx * dx).to("Pa")
-            h_next = (w.h + dhwdx * dx).to("J/kg")
-
-            g_next = replace(g, T=T_next, P=P_next)
-            w_next = replace(w, h=h_next)
-
-            gas_hist.append(g_next)
-            water_hist.insert(0, w_next)
-
-            g, w = g_next, w_next
-
-            if (i + 1) % 10 == 0:
-                log.info(
-                    "g: m=%s T=%s P=%s | w: m=%s h=%s T=%s P=%s | T_wg=%s T_ww=%s UA'=%s q''=%s x=%s/%s boiling=%s"
-                    % (_fmt(g.mass_flow), _fmt(g.T), _fmt(g.P),
-                    _fmt(w.mass_flow), _fmt(w.h), _fmt(Tw), _fmt(w.P),
-                    _fmt(Tgw), _fmt(Tww), _fmt(UA_prime), _fmt(qprime),
-                    _fmt((i + 1) * dx), _fmt(L), _fmt(boiling)),
-                    extra={"stage": self.stage.name, "step": i + 1},
-                )
-
+    def solve(self) -> Tuple[List[GasStream], List[WaterStream]]:
+        # CODE
         return gas_hist, water_hist
-
