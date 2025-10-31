@@ -67,23 +67,27 @@ def pressure_drop_gas(g: GasStream, stage: HXStage, i: int, dx: Q_) -> Q_:
 
 # --------------------- stream updaters ----------------------
 
+
+def _solve_T_for_h(P, X, h_target, T0, maxit=30):
+    T = T0.to("K"); h_target = h_target.to("J/kg")
+    for _ in range(maxit):
+        h  = _gasprops.h(T, P, X)            # J/kg
+        dh = (h_target - h).to("J/kg")
+        if abs(dh).magnitude < 1e-3:         # tighten if needed
+            return T
+        cp = _gasprops.cp(T, P, X)           # J/kg/K
+        dT = (dh / cp).to("K")
+        T  = (T + 0.8*dT).to("K")            # mild damping
+    return T
+
 @trace_calls(values=True)
-def update_gas_after_step(g: GasStream, qprime: Q_, dx: Q_, stage: HXStage) -> GasStream:
-    """
-    Apply energy and pressure changes to the gas after a differential step.
-    Enthalpy balance: dh_g = - (qprime*dx)/m_dot. Temperature via cp(T).
-    """
-    Q_step = (qprime * dx).to("W")  # = W/m * m = W; but dimensionally energy/ time. Use dt-free view: use J/s*? -> treat per-step balance.
-    # Use enthalpy per unit mass change:
-    dh = (-Q_step / g.mass_flow).to("J/kg")
-
-    # Convert to temperature with local cp
-    cp = _gasprops.cp(g.T, g.P, g.comp)  # J/kg/K
-    dT = (dh / cp).to("K")
-
-    T_new = (g.T + dT).to("K")
-    P_new = (g.P + pressure_drop_gas(g, stage, i=0, dx=dx)).to("Pa")  # placeholder hook
-
+def update_gas_after_step(g, qprime, dx, stage):
+    Q_step = (qprime * dx).to("W")           # W = J/s
+    dh     = (-Q_step / g.mass_flow).to("J/kg")
+    h_old  = _gasprops.h(g.T, g.P, g.comp)
+    h_new  = (h_old + dh).to("J/kg")
+    T_new  = _solve_T_for_h(g.P, g.comp, h_new, g.T)
+    P_new  = (g.P + pressure_drop_gas(g, stage, i=0, dx=dx)).to("Pa")
     return GasStream(mass_flow=g.mass_flow, T=T_new, P=P_new, comp=g.comp)
 
 @trace_calls(values=True)
