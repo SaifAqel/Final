@@ -17,6 +17,8 @@ from models import GasStream, WaterStream, HXStage
 from props import GasProps
 from pathlib import Path
 from datetime import datetime
+from results import build_global_profile  # and GlobalProfile if you need the type
+
 
 
 # ------------------------- helpers -------------------------
@@ -198,6 +200,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         else:
             print("error: solver expects exactly 6 stages, or 1 stage for the fallback single-stage march.", file=sys.stderr)
             return 3
+
+        # Build global same-x profile
+        global_profile = build_global_profile(stage_results)
+
 
         # Post-processing: per-step CSV
         df = results_to_dataframe(stage_results)
