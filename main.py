@@ -12,7 +12,6 @@ from io_loader import load_config
 from geometry import GeometryBuilder
 from solver import solve_exchanger, solve_stage
 from logging_utils import setup_logging
-from postproc import results_to_dataframe
 from models import GasStream, WaterStream, HXStage
 from props import GasProps
 from pathlib import Path
@@ -205,29 +204,29 @@ def main(argv: Optional[List[str]] = None) -> int:
         global_profile = build_global_profile(stage_results)
 
 
-        # Post-processing: per-step CSV
-        df = results_to_dataframe(stage_results)
+        # Steps CSV
+        from postproc import profile_to_dataframe, summary_from_profile
+        df = profile_to_dataframe(global_profile)
         df.to_csv(steps_path, index=False)
 
-        # Build per-stage summary and write CSV
-        rows, _, _ = _build_summary(stage_results)
-        import pandas as pd  # local import to avoid unnecessary dependency if not saving
+        # Summary CSV
+        rows, _, _ = summary_from_profile(global_profile)
+        import pandas as pd
         df_sum = pd.DataFrame(rows, columns=[
-            "stage_index", "stage_name", "stage_kind",
-            "Q_stage[W]", "UA_stage[W/K]",
-            "gas_in_T[K]", "gas_out_T[K]",
-            "water_in_h[J/kg]", "water_out_h[J/kg]",
+            "stage_index","stage_name","stage_kind",
+            "Q_stage[W]","UA_stage[W/K]",
+            "gas_in_T[K]","gas_out_T[K]",
+            "water_in_h[J/kg]","water_out_h[J/kg]",
         ])
         df_sum.to_csv(summary_path, index=False)
 
-        # Optional stdout summary
+        # Optional stdout summary now sourced from 'rows'
         if args.print_summary:
-            _print_text_summary(
-                stage_results,
-                is_six_stage=(len(stages) == 6),
-                gas_in=gas, gas_out=gas_out,
-                water_in=water, water_out=water_out
-            )
+            for r in rows:
+                print(f"{r['stage_index']} {r['stage_name']} {r['stage_kind']} "
+                    f"Q_stage={r['Q_stage[W]']:.6g} W UA={r['UA_stage[W/K]']:.6g} W/K "
+                    f"gas_in={r['gas_in_T[K]']:.3f} K→{r['gas_out_T[K]']:.3f} K "
+                    f"water_in={r['water_in_h[J/kg]']:.6g} J/kg→{r['water_out_h[J/kg]']:.6g} J/kg")
 
         return 0
 

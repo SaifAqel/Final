@@ -45,7 +45,8 @@ from models import GasStream, WaterStream
 
 @dataclass(frozen=True)
 class GlobalProfile:
-    x: List[Q_]              # global gas coordinate from 0 → sum L_stage
+    x: List[Q_]    
+    dx: List[Q_]          # global gas coordinate from 0 → sum L_stage
     gas: List[GasStream]     # gas(x)
     water: List[WaterStream] # water(x) remapped from L−x
     stage_index: List[int]   # owning stage per point
@@ -59,43 +60,35 @@ from units import Q_
 
 def build_global_profile(stage_results: List[StageResult]) -> GlobalProfile:
     x_glob: List[Q_] = []
+    dx_glob: List[Q_] = []
     gas_glob: List[GasStream] = []
     water_glob: List[WaterStream] = []
     idx_glob: List[int] = []
     name_glob: List[str] = []
-    qp_glob: List[Q_] = []
-    UA_glob: List[Q_] = []
+    qp_glob: List[Q_] = []          # <-- fix
+    UA_glob: List[Q_] = []  
 
     x0 = Q_(0.0, "m")
     for sr in stage_results:
         steps = sr.steps
         n = len(steps)
-        if n == 0:
-            continue
-
-        # local → global coordinate
+        if n == 0: continue
         for i in range(n):
             s = steps[i]
             x_glob.append((x0 + s.x).to("m"))
-            gas_glob.append(s.gas)                 # gas(x)
-
-            water_glob.append(steps[n - 1 - i].water)  # water(L−x) → water(x)
-
+            dx_glob.append(s.dx.to("m"))                # <-- new
+            gas_glob.append(s.gas)
+            water_glob.append(steps[n-1-i].water)
             idx_glob.append(s.stage_index)
             name_glob.append(sr.stage_name)
             qp_glob.append(s.qprime)
             UA_glob.append(s.UA_prime)
-
-        # stage length L = last x + dx
         L_stage = (steps[-1].x + steps[-1].dx).to("m")
         x0 = (x0 + L_stage).to("m")
 
     return GlobalProfile(
-        x=x_glob,
-        gas=gas_glob,
-        water=water_glob,
-        stage_index=idx_glob,
-        stage_name=name_glob,
-        qprime=qp_glob,
-        UA_prime=UA_glob,
+        x=x_glob, dx=dx_glob,
+        gas=gas_glob, water=water_glob,
+        stage_index=idx_glob, stage_name=name_glob,
+        qprime=qp_glob, UA_prime=UA_glob
     )
