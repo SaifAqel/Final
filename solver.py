@@ -301,17 +301,54 @@ def solve_exchanger(
         )
 
         if duty_ok and end_ok:
-            final_stage_results = water_stage_results  # use latest full fields
-            # Energy balance over whole exchanger
+            # --- synchronized final forward sweep using converged water boundaries ---
+            water_boundaries = [sr.steps[0].water for sr in water_stage_results]  # inlet-at-x=L per stage
+            g = gas_in
+            final_forward_results: List[StageResult] = []
+            w_out_sync = None
+
+            for i, st in enumerate(stages):
+                w_boundary = water_boundaries[i]
+                g, w_tmp, st_res = solve_stage(g, w_boundary, st, n_steps_by_stage[i], stage_index=i)
+                final_forward_results.append(st_res)
+                if i == 0:
+                    w_out_sync = w_tmp  # exchanger water outlet at stage 1
+
+            g_out_sync = g  # exchanger gas outlet at stage 6
+
+            # Energy check on the synchronized sweep
+            h_g_out = _gasprops.h(g_out_sync.T, g_out_sync.P, g_out_sync.comp)
+            h_w_out = w_out_sync.h
             Q_gas = (gas_in.mass_flow * (h_g_in - h_g_out)).to("W")
             Q_wat = (water_in.mass_flow * (h_w_out - h_w_in)).to("W")
             mismatch = abs(Q_gas - Q_wat) / (abs(Q_wat) + Q_(1e-12, "W"))
+
+            log.info(
+                f"FINAL forward: Q_total={sum((sr.Q_stage for sr in final_forward_results), Q_(0,'W')):~P} "
+                f"Q_gas={Q_gas:~P} Q_water={Q_wat:~P} rel_err={mismatch:~P}",
+                extra={"stage": "ALL", "step": "final_forward"},
+            )
+
+            # Optional: log per-stage snapshots for the final sweep
+            for sr in final_forward_results:
+                s0, sN = sr.steps[0], sr.steps[-1]
+                log.info(
+                    f"{sr.stage_name}: gas_in(T={s0.gas.T:~P},P={s0.gas.P:~P}) "
+                    f"gas_out(T={sN.gas.T:~P},P={sN.gas.P:~P}) "
+                    f"water_in(h={s0.water.h:~P},P={s0.water.P:~P}) "
+                    f"water_out(h={sN.water.h:~P}) Q_stage={sr.Q_stage:~P}",
+                    extra={"stage": sr.stage_name, "step": "final_forward"},
+                )
+
+            # Enforce same 0.5% criterion if you want
             if mismatch.magnitude > 0.005:
                 raise RuntimeError(
-                    f"Energy mismatch >0.5% after convergence. "
+                    f"Energy mismatch >0.5% on final sweep. "
                     f"Q_gas={Q_gas:~P}, Q_water={Q_wat:~P}, rel_err={mismatch:~P}"
                 )
-            return final_stage_results, g_out, w_out
+
+            # Return results from the synchronized sweep so CSVs and summaries reflect it
+            return final_forward_results, g_out_sync, w_out_sync
 
         # Prepare for next pass
         prev_Q_total = Q_total
