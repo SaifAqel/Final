@@ -15,6 +15,8 @@ from logging_utils import setup_logging
 from postproc import results_to_dataframe
 from models import GasStream, WaterStream, HXStage
 from props import GasProps
+from pathlib import Path
+from datetime import datetime
 
 
 # ------------------------- helpers -------------------------
@@ -124,10 +126,15 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
                    choices=["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"],
                    default="INFO")
 
-    p.add_argument("--csv", default="results.csv",
-                   help="Path to write per-step results CSV.")
-    p.add_argument("--summary", default="summary.csv",
-                   help="Path to write per-stage summary CSV.")
+    # Output controls
+    p.add_argument("--outdir", default="results",
+                   help="Directory for all outputs. Created if missing.")
+    p.add_argument("--run-id", default="",
+                   help="Identifier for filenames. Default uses current timestamp.")
+    p.add_argument("--csv", default="",
+                   help="Explicit path to per-step results CSV. If empty, auto-named in --outdir.")
+    p.add_argument("--summary", default="",
+                   help="Explicit path to per-stage summary CSV. If empty, auto-named in --outdir.")
     p.add_argument("--print-summary", action="store_true",
                    help="Print concise text summary to stdout.")
 
@@ -141,6 +148,13 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Setup logging early
     setup_logging(args.log_level)
+
+    # Prepare output folder and filenames
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    run_id = args.run_id.strip() or datetime.now().strftime("%Y%m%d-%H%M%S")
+    steps_path = Path(args.csv) if args.csv else outdir / f"{run_id}_steps.csv"
+    summary_path = Path(args.summary) if args.summary else outdir / f"{run_id}_summary.csv"
 
     # Units from CLI
     target_dx = q_or_none(args.target_dx)
@@ -187,7 +201,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         # Post-processing: per-step CSV
         df = results_to_dataframe(stage_results)
-        df.to_csv(args.csv, index=False)
+        df.to_csv(steps_path, index=False)
 
         # Build per-stage summary and write CSV
         rows, _, _ = _build_summary(stage_results)
@@ -198,7 +212,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "gas_in_T[K]", "gas_out_T[K]",
             "water_in_h[J/kg]", "water_out_h[J/kg]",
         ])
-        df_sum.to_csv(args.summary, index=False)
+        df_sum.to_csv(summary_path, index=False)
 
         # Optional stdout summary
         if args.print_summary:
