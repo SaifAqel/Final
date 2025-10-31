@@ -73,7 +73,7 @@ def update_gas_after_step(g: GasStream, qprime: Q_, dx: Q_, stage: HXStage) -> G
     Apply energy and pressure changes to the gas after a differential step.
     Enthalpy balance: dh_g = - (qprime*dx)/m_dot. Temperature via cp(T).
     """
-    Q_step = (qprime * dx).to("W*m")  # = W/m * m = W; but dimensionally energy/ time. Use dt-free view: use J/s*? -> treat per-step balance.
+    Q_step = (qprime * dx).to("W")  # = W/m * m = W; but dimensionally energy/ time. Use dt-free view: use J/s*? -> treat per-step balance.
     # Use enthalpy per unit mass change:
     dh = (-Q_step / g.mass_flow).to("J/kg")
 
@@ -92,7 +92,7 @@ def update_water_after_step(w: WaterStream, qprime: Q_, dx: Q_, stage: HXStage) 
     Apply energy change to the water after a differential step.
     Enthalpy balance: dh_w = + (qprime*dx)/m_dot. Pressure constant.
     """
-    Q_step = (qprime * dx).to("W*m")
+    Q_step = (qprime * dx).to("W")
     dh = (Q_step / w.mass_flow).to("J/kg")
     h_new = (w.h + dh).to("J/kg")
     return WaterStream(mass_flow=w.mass_flow, h=h_new, P=w.P)

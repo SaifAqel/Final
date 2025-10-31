@@ -1,0 +1,2 @@
+stage_index,stage_name,stage_kind,Q_stage[W],UA_stage[W/K],gas_in_T[K],gas_out_T[K],water_in_h[J/kg],water_out_h[J/kg]
+0,HX_1,single_tube,6261383.284733061,4143.567927524715,2176.59,1725.214117659271,439000,1056703.4067161577
