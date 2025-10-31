@@ -7,15 +7,13 @@ class GasStream:
     mass_flow: Q_     # kg/s
     T: Q_             # K
     P: Q_             # Pa
-    comp: Dict[str, Q_] | None = None
-    stage: str = "-"
+    comp: Dict[str, Q_]
 
 @dataclass
 class WaterStream:
     mass_flow: Q_     # kg/s
     h: Q_             # J/kg
     P: Q_             # Pa
-    stage: str = "-"
 
 @dataclass
 class HXStage:
