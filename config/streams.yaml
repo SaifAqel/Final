@@ -1,5 +1,5 @@
 gas_stream:
-  mass_flow_rate: { value: 9.427, unit: kg/s }
+  mass_flow_rate: { value: 4, unit: kg/s }
   temperature: { value: 2176.59, unit: K }
   pressure: { value: 115000, unit: Pa }
 

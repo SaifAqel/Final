@@ -215,7 +215,7 @@ def solve_exchanger(
 
     # Build per-stage step counts for near-uniform dx
     if target_dx is None:
-        dx_target = (_median_length(stages) / 50).to("m")
+        dx_target = (_median_length(stages) / 100).to("m")
     else:
         dx_target = target_dx.to("m")
 
