@@ -25,6 +25,8 @@ class StepResult:
     UA_prime: Q_
     qprime: Q_
     boiling: bool
+    h_g: Q_          # <-- add
+    h_c: Q_          # <-- add
     stage_name: Optional[str] = None
     stage_index: Optional[int] = None
 
@@ -53,6 +55,8 @@ class GlobalProfile:
     stage_name: List[str]    # owning stage name per point
     qprime: List[Q_]         # q′ at gas x (from StepResult)
     UA_prime: List[Q_]       # UA′ at gas x (from StepResult)
+    h_g: List[Q_]      # <-- add
+    h_c: List[Q_]      # <-- add
 
 # results.py (or profiles.py)
 from typing import List
@@ -67,6 +71,8 @@ def build_global_profile(stage_results: List[StageResult]) -> GlobalProfile:
     name_glob: List[str] = []
     qp_glob: List[Q_] = []          # <-- fix
     UA_glob: List[Q_] = []  
+    h_g_glob: List[Q_] = []     # <-- add
+    h_c_glob: List[Q_] = []     # <-- add
 
     x0 = Q_(0.0, "m")
     for sr in stage_results:
@@ -83,6 +89,8 @@ def build_global_profile(stage_results: List[StageResult]) -> GlobalProfile:
             name_glob.append(sr.stage_name)
             qp_glob.append(s.qprime)
             UA_glob.append(s.UA_prime)
+            h_g_glob.append(s.h_g)    # <-- add
+            h_c_glob.append(s.h_c)    # <-- add
         L_stage = (steps[-1].x + steps[-1].dx).to("m")
         x0 = (x0 + L_stage).to("m")
 
@@ -90,5 +98,6 @@ def build_global_profile(stage_results: List[StageResult]) -> GlobalProfile:
         x=x_glob, dx=dx_glob,
         gas=gas_glob, water=water_glob,
         stage_index=idx_glob, stage_name=name_glob,
-        qprime=qp_glob, UA_prime=UA_glob
+        qprime=qp_glob, UA_prime=UA_glob,
+        h_g=h_g_glob, h_c=h_c_glob  
     )

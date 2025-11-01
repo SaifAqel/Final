@@ -38,6 +38,7 @@ def _copy_step_with_stage(sr: StepResult, stage_name: str, stage_index: int) -> 
         Tgw=sr.Tgw, Tww=sr.Tww,
         UA_prime=sr.UA_prime, qprime=sr.qprime,
         boiling=sr.boiling,
+        h_g=sr.h_g, h_c=sr.h_c,
         stage_name=stage_name, stage_index=stage_index
     )
 

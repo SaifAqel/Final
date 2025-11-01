@@ -53,5 +53,7 @@ def solve_step(g: GasStream, w: WaterStream, stage: HXStage, Tgw_guess: Q_, Tww_
         Tgw=Tgw, Tww=Tww,
         UA_prime=UA_prime,
         qprime=qprime,
-        boiling=boiling
+        boiling=boiling,
+        h_g=h_g,                 # <-- add
+        h_c=h_c                  # <-- add
     )

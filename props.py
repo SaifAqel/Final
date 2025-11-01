@@ -32,6 +32,10 @@ class GasProps:
     def h(self, T: Q_, P: Q_, X: Dict[str, Q_], film_T: Optional[Q_] = None) -> Q_:
         return Q_(self._set(T,P,X,film_T).enthalpy_mass, "J/kg")
 
+    def h_sensible(self, T: Q_, P: Q_, X: dict, Tref: Q_ = Q_(298.15, "K"), film_T: Q_ | None = None) -> Q_:
+        hT   = self.h(T,   P, X, film_T)
+        href = self.h(Tref, P, X, film_T)
+        return (hT - href).to("J/kg")
 
 class WaterProps:
     """IAPWS-97 water/steam properties using (P,h) or (P,T)."""
