@@ -1,6 +1,6 @@
-from units import Q_
-from models import GasStream
-from props import GasProps
+from common.units import Q_
+from common.models import GasStream
+from common.props import GasProps
 import numpy as np
 from typing import Dict, Any
 

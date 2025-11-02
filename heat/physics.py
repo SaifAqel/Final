@@ -1,5 +1,5 @@
 from math import pi, log
-from units import Q_
+from common.units import Q_
 
 def fouling_resistances(spec: dict) -> tuple[Q_, Q_]:
     di = spec["inner_diameter"].to("m")

@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from typing import Dict, Any
-from units import Q_
+from common.units import Q_
 
 @dataclass
 class GasStream:
-    mass_flow: Q_     # kg/s
+    mass_flow: Q_   # kg/s
     T: Q_             # K
     P: Q_             # Pa
     comp: Dict[str, Q_]

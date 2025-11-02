@@ -1,9 +1,8 @@
 # postproc.py
 from __future__ import annotations
-from typing import List
 import pandas as pd
-from results import GlobalProfile
-from props import WaterProps, GasProps
+from common.results import GlobalProfile
+from common.props import WaterProps, GasProps
 
 _gas = GasProps()  # reuse for all rows
 

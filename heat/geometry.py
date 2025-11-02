@@ -1,7 +1,7 @@
 from math import pi
 from dataclasses import replace
 from typing import List
-from models import HXStage, Drum
+from common.models import HXStage, Drum
 
 class GeometryBuilder:
     def __init__(self, drum: Drum):

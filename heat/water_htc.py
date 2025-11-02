@@ -1,9 +1,7 @@
 from math import log, sqrt, exp, log10
-from units import Q_
-from models import WaterStream, HXStage
-from props import WaterProps
-from typing import Tuple
-
+from common.units import Q_
+from common.models import WaterStream, HXStage
+from common.props import WaterProps
 
 P_CRIT_WATER = Q_(22.064, "MPa")
 MW_WATER = 18.01528

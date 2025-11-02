@@ -1,10 +1,9 @@
-water_drum:
-  inner_diameter: { value: 4.5, unit: m }
-  length: { value: 5.0, unit: m } # informational here
-  wall:
-    surfaces:
-      inner:
-        roughness: { value: 5, unit: micrometer }
-        emissivity: { value: 0.80, unit: dimensionless }
-        fouling_thickness: { value: 0.0001, unit: m }
-        fouling_conductivity: { value: 0.2, unit: W/m/K }
+inner_diameter: { value: 4.5, unit: m }
+length: { value: 5.0, unit: m } # informational here
+wall:
+  surfaces:
+    inner:
+      roughness: { value: 5, unit: micrometer }
+      emissivity: { value: 0.80, unit: dimensionless }
+      fouling_thickness: { value: 0.0001, unit: m }
+      fouling_conductivity: { value: 0.2, unit: W/m/K }

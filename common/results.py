@@ -1,17 +1,16 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional
+from common.units import Q_
+from common.models import GasStream, WaterStream
 
-import math
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
-# Types provided by the caller's codebase
-from units import Q_
-from models import GasStream, WaterStream
-
+@dataclass(frozen=True)
+class CombustionResult:
+    LHV: Q_
+    HHV: Q_
+    Q_in: Q_
+    T_ad: Q_
+    flue: GasStream
 
 @dataclass(frozen=True)
 class StepResult:
@@ -30,7 +29,6 @@ class StepResult:
     stage_name: Optional[str] = None
     stage_index: Optional[int] = None
 
-
 @dataclass(frozen=True)
 class StageResult:
     stage_name: str
@@ -38,12 +36,6 @@ class StageResult:
     steps: List[StepResult]
     Q_stage: Q_
     UA_stage: Q_
-
-# results.py
-from dataclasses import dataclass
-from typing import List
-from units import Q_
-from models import GasStream, WaterStream
 
 @dataclass(frozen=True)
 class GlobalProfile:
@@ -57,10 +49,6 @@ class GlobalProfile:
     UA_prime: List[Q_]       # UA′ at gas x (from StepResult)
     h_g: List[Q_]      # <-- add
     h_c: List[Q_]      # <-- add
-
-# results.py (or profiles.py)
-from typing import List
-from units import Q_
 
 def build_global_profile(stage_results: List[StageResult]) -> GlobalProfile:
     x_glob: List[Q_] = []

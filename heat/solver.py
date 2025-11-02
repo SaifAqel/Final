@@ -6,12 +6,12 @@ from typing import List, Tuple, Optional
 from math import ceil
 import logging
 
-from units import Q_, ureg
-from models import HXStage, GasStream, WaterStream
-from results import StepResult, StageResult
-from step_solver import solve_step
-from props import GasProps, WaterProps
-from logging_utils import setup_logging, trace_calls
+from common.units import Q_
+from common.models import HXStage, GasStream, WaterStream
+from common.results import StepResult, StageResult
+from heat.step_solver import solve_step
+from common.props import GasProps, WaterProps
+from common.logging_utils import setup_logging, trace_calls
 
 _gasprops = GasProps()  # reuse for cp/h evaluation
 

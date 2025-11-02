@@ -9,11 +9,11 @@ units:
 
 phases:
   - name: gas_mix
-    thermo: ideal-gas # density from EOS at T,P
-    transport: mixture-averaged # viscosity, conductivity
-    kinetics: none # nonreacting mixture
+    thermo: ideal-gas
+    transport: mixture-averaged
+    kinetics: none
     elements: [C, H, O, N, S, Ar]
-    species: [CO2, H2O, SO2, O2, N2, Ar]
+    species: [CO2, H2O, SO2, O2, N2, Ar, CH4, C2H6, C3H8, C4H10, H2S]
     state:
       T: 300 K
       P: 1 atm
@@ -27,6 +27,7 @@ species:
       model: NASA7
       temperature-ranges: [200.0, 1000.0, 6000.0]
       data:
+        # 200–1000 K
         - [
             2.35677352,
             8.98459677e-03,
@@ -36,23 +37,25 @@ species:
             -4.83719697e+04,
             9.90105222,
           ]
+        # 1000–6000 K
         - [
-            3.85746029,
+            3.85796028,
             4.41437026e-03,
             -2.21481404e-06,
             5.23490188e-10,
             -4.72084164e-14,
-            -4.83731448e+04,
+            -4.87591660e+04,
             2.27163806,
           ]
+
     transport:
       model: gas
       geometry: linear
-      diameter: 3.763
-      well-depth: 244.0
-      polarizability: 2.65
-      rotational-relaxation: 2.6
-      acentric-factor: 0.2236
+      well-depth: 244.0 # K
+      diameter: 3.763 # angstrom
+      dipole: 0.0 # Debye
+      polarizability: 2.650 # angstrom^3
+      rotational-relaxation: 2.1 # Zrot at 298 K
 
   # ----------------------- H2O -----------------------
   - name: H2O
@@ -223,3 +226,175 @@ species:
       polarizability: 1.641
       rotational-relaxation: 0.0
       acentric-factor: 0.000
+
+  # ----------------------- CH4 -----------------------
+  - name: CH4
+    composition: { C: 1, H: 4 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            5.14987613e+00,
+            -1.36709788e-02,
+            4.91800599e-05,
+            -4.84743026e-08,
+            1.66693956e-11,
+            -1.02466476e+04,
+            -4.64130376e+00,
+          ]
+        - [
+            7.48514950e-02,
+            1.33909467e-02,
+            -5.73285809e-06,
+            1.22292535e-09,
+            -1.01815230e-13,
+            -1.00095936e+04,
+            1.84373180e+01,
+          ]
+    transport:
+      model: gas
+      geometry: nonlinear
+      diameter: 3.746
+      well-depth: 141.4
+      polarizability: 2.6
+      rotational-relaxation: 13.0
+      acentric-factor: 0.011
+
+  # ----------------------- C2H6 -----------------------
+  - name: C2H6
+    composition: { C: 2, H: 6 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 3500.0]
+      data:
+        # 200–1000 K
+        - [
+            4.29142492,
+            -5.50154270e-03,
+            5.99438288e-05,
+            -7.08466285e-08,
+            2.68685771e-11,
+            -1.15222055e+04,
+            2.66682316,
+          ]
+        # 1000–3500 K
+        - [
+            1.07188150,
+            2.16852677e-02,
+            -1.00256067e-05,
+            2.21412001e-09,
+            -1.90002890e-13,
+            -1.14263932e+04,
+            15.11561070,
+          ]
+    transport:
+      model: gas
+      geometry: nonlinear
+      diameter: 4.302 # Å
+      well-depth: 252.3 # K
+      polarizability: 4.226 # Å^3
+      rotational-relaxation: 1.5
+      acentric-factor: 0.099
+
+  # ----------------------- C3H8 -----------------------
+  - name: C3H8
+    composition: { C: 3, H: 8 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            5.40872872,
+            -8.55221825e-03,
+            8.42178491e-05,
+            -1.00942683e-07,
+            3.86914479e-11,
+            9.42600956e+03,
+            3.62322504,
+          ]
+        - [
+            5.75125882,
+            1.87605762e-02,
+            -6.70191976e-06,
+            1.07751871e-09,
+            -6.43090885e-14,
+            7.97977293e+03,
+            -4.91359355,
+          ]
+    transport:
+      model: gas
+      geometry: nonlinear
+      diameter: 4.982 # Å
+      well-depth: 266.8 # K
+      polarizability: 5.921 # Å^3
+      rotational-relaxation: 1.0
+      acentric-factor: 0.1521
+
+  # ----------------------- C4H10 -----------------------
+  - name: C4H10
+    composition: { C: 4, H: 10 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            6.14474013,
+            1.64500242e-04,
+            9.67848789e-05,
+            -1.25486208e-07,
+            4.97846257e-11,
+            -1.75989467e+04,
+            -1.08058878,
+          ]
+        - [
+            9.44547835,
+            2.57856620e-02,
+            -9.23613194e-06,
+            1.48631762e-09,
+            -8.87891206e-14,
+            -2.01383773e+04,
+            -2.63477585e+01,
+          ]
+    transport:
+      model: gas
+      geometry: nonlinear
+      diameter: 5.206
+      well-depth: 350.9
+      polarizability: 0.0
+      rotational-relaxation: 1.0
+      acentric-factor: 0.20081
+
+  # ----------------------- H2S -----------------------
+  - name: H2S
+    composition: { H: 2, S: 1 }
+    thermo:
+      model: NASA7
+      temperature-ranges: [200.0, 1000.0, 6000.0]
+      data:
+        - [
+            3.93234760,
+            -5.02609050e-04,
+            4.59284730e-06,
+            -3.18072140e-09,
+            6.64975610e-13,
+            -3.65053590e+03,
+            2.31579050,
+          ]
+        - [
+            2.74521990,
+            4.04346070e-03,
+            -1.63845100e-06,
+            2.75202490e-10,
+            -1.85920950e-14,
+            -3.41994440e+03,
+            8.05467450,
+          ]
+    transport:
+      model: gas
+      geometry: nonlinear
+      diameter: 3.60 # Å
+      well-depth: 301.0 # K
+      polarizability: 3.76 # Å^3
+      rotational-relaxation: 4.0
+      acentric-factor: 0.10

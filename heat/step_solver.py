@@ -1,11 +1,10 @@
-from typing import Optional
-from results import StepResult
-from units import Q_
-from models import HXStage, GasStream, WaterStream
-from physics import wall_resistance, fouling_resistances
-from water_htc import water_htc
-from props import WaterProps
-from gas_htc import gas_htc
+from common.results import StepResult
+from common.units import Q_
+from common.models import HXStage, GasStream, WaterStream
+from heat.physics import wall_resistance, fouling_resistances
+from heat.water_htc import water_htc
+from common.props import WaterProps
+from heat.gas_htc import gas_htc
 
 def solve_step(g: GasStream, w: WaterStream, stage: HXStage, Tgw_guess: Q_, Tww_guess: Q_, qprime_guess: Q_, i: int, x: Q_, dx: Q_) -> StepResult:
     spec = stage.spec

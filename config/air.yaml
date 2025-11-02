@@ -1,0 +1,8 @@
+T: { value: 300.0, unit: kelvin }
+P: { value: 101325, unit: Pa }
+composition:
+  O2: { value: 0.2095, unit: dimensionless }
+  N2: { value: 0.7808, unit: dimensionless }
+  Ar: { value: 0.0093, unit: dimensionless }
+  CO2: { value: 0.0004, unit: dimensionless }
+  H2O: { value: 0.0, unit: dimensionless }

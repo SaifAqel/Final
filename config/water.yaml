@@ -1,0 +1,7 @@
+mass_flow_rate: { value: 10, unit: kg/s }
+enthalpy: { value: 439000, unit: J/kg }
+pressure: { value: 1000000, unit: Pa }
+composition:
+  H2O: { value: 1.0, unit: dimensionless }
+drum:
+  flow_area: { value: 5, unit: m^2 }

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Dict, Optional
-from units import Q_
+from common.units import Q_
 
 import cantera as ct
 from iapws import IAPWS97
