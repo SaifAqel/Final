@@ -25,7 +25,7 @@ def from_fuel_and_air(fuel: GasStream, air: GasStream) -> GasStream:
     fuel_x = to_mole(fuel.comp)
     fuel_n = molar_flow(fuel.comp, fuel.mass_flow)
     air_x = to_mole(air.comp)
-    air_n = molar_flow(air.comp, fuel.mass_flow)
+    air_n = molar_flow(air.comp, air.mass_flow)
 
     gf=lambda k:fuel_x.get(k,0.0); ga=lambda k:air_x.get(k,0.0)
     n_CO2 = air_n*ga("CO2")+fuel_n*gf("CO2")+fuel_n*(gf("CH4")+2*gf("C2H6")+3*gf("C3H8")+4*gf("C4H10"))

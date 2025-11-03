@@ -7,7 +7,6 @@ from common.models import GasStream, WaterStream
 @dataclass(frozen=True)
 class CombustionResult:
     LHV: Q_
-    HHV: Q_
     Q_in: Q_
     T_ad: Q_
     flue: GasStream

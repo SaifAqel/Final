@@ -16,15 +16,9 @@ combustion_results = svc.run()
 print(combustion_results)
 
 result = run_hx(
-    stages_yaml="config/stages.yaml",
-    streams_yaml="config/streams.yaml",
-    drum_yaml="config/drum.yaml",
+    stages_raw=stages,
+    water=water,
+    gas=combustion_results.flue,
+    drum=drum,
     target_dx="0.1 m",
-    min_steps=20,
-    max_steps=400,
-    max_passes=20,
-    tol_Q="1e-3 W",
-    tol_end="1e-3 J/kg",
-    write_csv=True,
-    outdir="results"
 )

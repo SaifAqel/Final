@@ -18,4 +18,4 @@ def molar_flow(mass_comp: Dict[str, float], m_dot: float) -> float:
     return sum((mass_comp[sp] * m_dot) / (molar_masses[sp]) for sp in mass_comp)
 
 def mass_flow(mol_comp: Dict[str, float], n_dot: float) -> float:
-    return sum(mol_comp[sp] * n_dot * molar_masses[sp] / 1000 for sp in mol_comp)
+    return sum(mol_comp[sp] * n_dot * molar_masses[sp] for sp in mol_comp)
