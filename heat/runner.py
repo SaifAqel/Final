@@ -79,7 +79,9 @@ def run_hx(
             "Q_stage[W]","UA_stage[W/K]",
             "gas_in_T[K]","gas_out_T[K]",
             "water_in_h[J/kg]","water_out_h[J/kg]",
+            "ΔP_stage_fric[Pa]","ΔP_stage_minor[Pa]","ΔP_stage_total[Pa]",
         ]).to_csv(summary_path, index=False)
+
 
     return {
         "gas_in": gas,

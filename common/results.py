@@ -1,6 +1,6 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import List, Optional
+from dataclasses import dataclass, field
+from typing import List, Sequence
 from common.units import Q_
 from common.models import GasStream, WaterStream
 
@@ -11,80 +11,101 @@ class CombustionResult:
     T_ad: Q_
     flue: GasStream
 
+# ---------------- Streams are imported from common.models ----------------
+
 @dataclass(frozen=True)
 class StepResult:
-    i: Optional[int]
-    x: Optional[Q_]
-    dx: Optional[Q_]
-    gas: GasStream
-    water: WaterStream
+    # marching index and geometry
+    i: int
+    x: Q_
+    dx: Q_
+    # stream snapshots at start of step
+    gas: object     # GasStream
+    water: object   # WaterStream
+    # wall state
     Tgw: Q_
     Tww: Q_
+    # local per-length metrics
     UA_prime: Q_
     qprime: Q_
     boiling: bool
-    h_g: Q_          # <-- add
-    h_c: Q_          # <-- add
-    stage_name: Optional[str] = None
-    stage_index: Optional[int] = None
+    # HTCs for diagnostics
+    h_g: Q_
+    h_c: Q_
+    # ---- appended fields (binary compatible via defaults) ----
+    stage_name: str = ""
+    stage_index: int = -1
+    dP_fric: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
+    dP_minor: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
+    dP_total: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
 
 @dataclass(frozen=True)
 class StageResult:
     stage_name: str
     stage_kind: str
-    steps: List[StepResult]
+    steps: Sequence[StepResult]
     Q_stage: Q_
     UA_stage: Q_
+    # ---- appended fields (binary compatible via defaults) ----
+    dP_stage_fric: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
+    dP_stage_minor: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
+    dP_stage_total: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
 
 @dataclass(frozen=True)
 class GlobalProfile:
-    x: List[Q_]    
-    dx: List[Q_]          # global gas coordinate from 0 → sum L_stage
-    gas: List[GasStream]     # gas(x)
-    water: List[WaterStream] # water(x) remapped from L−x
-    stage_index: List[int]   # owning stage per point
-    stage_name: List[str]    # owning stage name per point
-    qprime: List[Q_]         # q′ at gas x (from StepResult)
-    UA_prime: List[Q_]       # UA′ at gas x (from StepResult)
-    h_g: List[Q_]      # <-- add
-    h_c: List[Q_]      # <-- add
+    # flattened along exchanger x
+    x: List[Q_]
+    dx: List[Q_]
+    gas: List[object]
+    water: List[object]
+    qprime: List[Q_]
+    UA_prime: List[Q_]
+    h_g: List[Q_]
+    h_c: List[Q_]
+    stage_index: List[int]
+    stage_name: List[str]
+    # ΔP per-step
+    dP_fric: List[Q_]
+    dP_minor: List[Q_]
+    dP_total: List[Q_]
+    # keep full stage_results for summary
+    stage_results: List[StageResult]
 
-def build_global_profile(stage_results: List[StageResult]) -> GlobalProfile:
-    x_glob: List[Q_] = []
-    dx_glob: List[Q_] = []
-    gas_glob: List[GasStream] = []
-    water_glob: List[WaterStream] = []
-    idx_glob: List[int] = []
-    name_glob: List[str] = []
-    qp_glob: List[Q_] = []          # <-- fix
-    UA_glob: List[Q_] = []  
-    h_g_glob: List[Q_] = []     # <-- add
-    h_c_glob: List[Q_] = []     # <-- add
+def build_global_profile(stage_results: Sequence[StageResult]) -> GlobalProfile:
+    xs: List[Q_] = []
+    dxs: List[Q_] = []
+    gas: List[object] = []
+    water: List[object] = []
+    qprime: List[Q_] = []
+    UA_prime: List[Q_] = []
+    h_g: List[Q_] = []
+    h_c: List[Q_] = []
+    sidx: List[int] = []
+    sname: List[str] = []
+    dP_fric: List[Q_] = []
+    dP_minor: List[Q_] = []
+    dP_total: List[Q_] = []
 
-    x0 = Q_(0.0, "m")
-    for sr in stage_results:
-        steps = sr.steps
-        n = len(steps)
-        if n == 0: continue
-        for i in range(n):
-            s = steps[i]
-            x_glob.append((x0 + s.x).to("m"))
-            dx_glob.append(s.dx.to("m"))                # <-- new
-            gas_glob.append(s.gas)
-            water_glob.append(steps[n-1-i].water)
-            idx_glob.append(s.stage_index)
-            name_glob.append(sr.stage_name)
-            qp_glob.append(s.qprime)
-            UA_glob.append(s.UA_prime)
-            h_g_glob.append(s.h_g)    # <-- add
-            h_c_glob.append(s.h_c)    # <-- add
-        L_stage = (steps[-1].x + steps[-1].dx).to("m")
-        x0 = (x0 + L_stage).to("m")
+    for k, sr in enumerate(stage_results):
+        for st in sr.steps:
+            xs.append(st.x)
+            dxs.append(st.dx)
+            gas.append(st.gas)
+            water.append(st.water)
+            qprime.append(st.qprime)
+            UA_prime.append(st.UA_prime)
+            h_g.append(st.h_g)
+            h_c.append(st.h_c)
+            sidx.append(k if st.stage_index < 0 else st.stage_index)
+            sname.append(sr.stage_name if not st.stage_name else st.stage_name)
+            dP_fric.append(st.dP_fric)
+            dP_minor.append(st.dP_minor)
+            dP_total.append(st.dP_total)
 
     return GlobalProfile(
-        x=x_glob, dx=dx_glob,
-        gas=gas_glob, water=water_glob,
-        stage_index=idx_glob, stage_name=name_glob,
-        qprime=qp_glob, UA_prime=UA_glob,
-        h_g=h_g_glob, h_c=h_c_glob  
+        x=xs, dx=dxs, gas=gas, water=water,
+        qprime=qprime, UA_prime=UA_prime, h_g=h_g, h_c=h_c,
+        stage_index=sidx, stage_name=sname,
+        dP_fric=dP_fric, dP_minor=dP_minor, dP_total=dP_total,
+        stage_results=list(stage_results),
     )

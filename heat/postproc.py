@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 from common.results import GlobalProfile
 from common.props import WaterProps, GasProps
+from common.units import Q_
 
 _gas = GasProps()  # reuse for all rows
 
@@ -38,7 +39,7 @@ def profile_to_dataframe(gp: "GlobalProfile") -> "pd.DataFrame":
             w_k   = WaterProps.k_from_Ph(w.P, w.h)
             w_rho = WaterProps.rho_from_Ph(w.P, w.h)
 
-        # gas props (need composition from StepResult; already present in gp.gas[i])
+        # gas props
         g_h   = _gas.h_sensible(g.T, g.P, g.comp)
         g_cp  = _gas.cp(g.T, g.P, g.comp)
         g_mu  = _gas.mu(g.T, g.P, g.comp)
@@ -72,12 +73,19 @@ def profile_to_dataframe(gp: "GlobalProfile") -> "pd.DataFrame":
             "water_k[W/m/K]": _mag_or_nan(w_k, "W/m/K"),
             "water_rho[kg/m^3]": _mag_or_nan(w_rho, "kg/m^3"),
             "water_x[-]": _mag_or_nan(xq, ""),
-            "h_gas[W/m^2/K]": gp.h_g[i].to("W/m^2/K").magnitude,   # <-- add
-            "h_water[W/m^2/K]": gp.h_c[i].to("W/m^2/K").magnitude, # <-- add
+
+            "h_gas[W/m^2/K]": gp.h_g[i].to("W/m^2/K").magnitude,
+            "h_water[W/m^2/K]": gp.h_c[i].to("W/m^2/K").magnitude,
+
+            # new gas-side ΔP columns
+            "dP_fric[Pa]": gp.dP_fric[i].to("Pa").magnitude,
+            "dP_minor[Pa]": gp.dP_minor[i].to("Pa").magnitude,
+            "dP_total[Pa]": gp.dP_total[i].to("Pa").magnitude,
+
             "boiling": bool(xq is not None),
         }
 
-        # optional: write gas composition so CSV alone is self-sufficient
+        # optional gas composition
         for sp, q in (g.comp or {}).items():
             row[f"y_{sp}[-]"] = q.to("").magnitude
 
@@ -90,31 +98,44 @@ def summary_from_profile(gp: "GlobalProfile") -> tuple[list[dict], float, float]
     rows = []
     Q_total = 0.0
     UA_total = 0.0
-    # group consecutive rows by stage_index
+
     import itertools
     for k, grp in itertools.groupby(range(len(gp.x)), key=lambda i: gp.stage_index[i]):
         idxs = list(grp)
         name = gp.stage_name[idxs[0]]
+
         # integrals
         Q_stage = sum((gp.qprime[i] * gp.dx[i]).to("W").magnitude for i in idxs)
         UA_stage = sum((gp.UA_prime[i] * gp.dx[i]).to("W/K").magnitude for i in idxs)
+
+        # ΔP sums
+        dP_fric = sum(gp.dP_fric[i].to("Pa").magnitude for i in idxs)
+        dP_minor = sum(gp.dP_minor[i].to("Pa").magnitude for i in idxs)
+        dP_total = sum(gp.dP_total[i].to("Pa").magnitude for i in idxs)
+
         # endpoints along gas x in this stage
         gas_in_T = gp.gas[idxs[0]].T.to("K").magnitude
         gas_out_T = gp.gas[idxs[-1]].T.to("K").magnitude
         water_in_h = gp.water[idxs[-1]].h.to("J/kg").magnitude   # counter-current at x=L
         water_out_h = gp.water[idxs[0]].h.to("J/kg").magnitude   # counter-current at x=0
+
         row = {
             "stage_index": k,
             "stage_name": name,
-            "stage_kind": "",   # fill if you extend GlobalProfile to include kind per point or a map
+            "stage_kind": "",
             "Q_stage[W]": Q_stage,
             "UA_stage[W/K]": UA_stage,
             "gas_in_T[K]": gas_in_T,
             "gas_out_T[K]": gas_out_T,
             "water_in_h[J/kg]": water_in_h,
             "water_out_h[J/kg]": water_out_h,
+            # new ΔP stage totals
+            "ΔP_stage_fric[Pa]": dP_fric,
+            "ΔP_stage_minor[Pa]": dP_minor,
+            "ΔP_stage_total[Pa]": dP_total,
         }
         rows.append(row)
         Q_total += Q_stage
         UA_total += UA_stage
+
     return rows, Q_total, UA_total
