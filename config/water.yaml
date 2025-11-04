@@ -1,5 +1,5 @@
-mass_flow_rate: { value: 10, unit: kg/s }
-enthalpy: { value: 439000, unit: J/kg }
+mass_flow_rate: { value: 25, unit: kg/s }
+enthalpy: { value: 300000, unit: J/kg }
 pressure: { value: 1000000, unit: Pa }
 composition:
   H2O: { value: 1.0, unit: dimensionless }

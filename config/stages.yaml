@@ -127,29 +127,29 @@ HX_5:
 
 HX_6:
   kind: "economiser"
-  inner_diameter: { value: 0.076, unit: m }
-  inner_length: { value: 5.620, unit: m }
-  tubes_number: { value: 100, unit: dimensionless }
+  inner_diameter: { value: 0.076, unit: m } # unchanged
+  inner_length: { value: 7.5, unit: m } # was 5.620
+  tubes_number: { value: 160, unit: dimensionless } # was 100
   layout: "triangular"
   arrangement: "inline"
   N_rows: { value: 4, unit: dimensionless }
-  ST: { value: 0.123, unit: m }
+  ST: { value: 0.123, unit: m } # keep pitch
   SL: { value: 0.123, unit: m }
-  baffle_spacing: { value: 0.105, unit: m }
-  shell_inner_diameter: { value: 1.80, unit: m } # Ds
-  baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
+  baffle_spacing: { value: 0.085, unit: m } # was 0.105 → higher h
+  shell_inner_diameter: { value: 1.80, unit: m }
+  baffle_cut: { value: 0.25, unit: dimensionless }
   bundle_clearance: { value: 0.010, unit: m }
   wall:
-    thickness: { value: 0.0029, unit: m }
-    conductivity: { value: 16, unit: W/m/K }
+    thickness: { value: 0.0025, unit: m } # thinner wall
+    conductivity: { value: 30, unit: W/m/K }
     surfaces:
       inner:
         roughness: { value: 0.5, unit: micrometer }
         emissivity: { value: 0.80, unit: dimensionless }
-        fouling_thickness: { value: 0.0001, unit: m }
+        fouling_thickness: { value: 0.0, unit: m } # best case to raise UA
         fouling_conductivity: { value: 0.20, unit: W/m/K }
       outer:
         roughness: { value: 0.5, unit: micrometer }
         emissivity: { value: 0.80, unit: dimensionless }
-        fouling_thickness: { value: 0.0001, unit: m }
+        fouling_thickness: { value: 0.0, unit: m }
         fouling_conductivity: { value: 0.20, unit: W/m/K }
