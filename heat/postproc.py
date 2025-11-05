@@ -10,36 +10,46 @@ _gas = GasProps()  # reuse for all rows
 def _mag_or_nan(q, unit):
     return q.to(unit).magnitude if q is not None else float("nan")
 
-def profile_to_dataframe(gp: "GlobalProfile") -> "pd.DataFrame":
+def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "pd.DataFrame":
+    # Build per-stage [first,last] index ranges once
+    stage_ranges: dict[int, tuple[int, int]] = {}
+    for i in range(len(gp.x)):
+        k = gp.stage_index[i]
+        if k not in stage_ranges:
+            stage_ranges[k] = [i, i]
+        else:
+            stage_ranges[k][1] = i
+    stage_ranges = {k: (v[0], v[1]) for k, v in stage_ranges.items()}
+
     rows = []
     for i in range(len(gp.x)):
         g = gp.gas[i]
-        w = gp.water[i]
 
-        # water side primitives
-        Tw = WaterProps.T_from_Ph(w.P, w.h)
+        # mirrored index for water within the same stage block
+        if remap_water:
+            i0, iN = stage_ranges[gp.stage_index[i]]
+            j = i0 + (iN - i)          # mirror: i -> j
+        else:
+            j = i
+
+        w = gp.water[j]
+
+        # water side primitives (from mirrored j)
         xq = WaterProps.quality_from_Ph(w.P, w.h)
         Two_phase = xq is not None
 
-        # water temperatures
         if Two_phase:
             Tw = WaterProps.Tsat(w.P)
-        else:
-            Tw = WaterProps.T_from_Ph(w.P, w.h)
-
-        # water props
-        if Two_phase:
-            w_cp  = None
-            w_mu  = None
-            w_k   = None
+            w_cp = w_mu = w_k = None
             w_rho = WaterProps.rho_from_Px(w.P, xq) if xq is not None else None
         else:
-            w_cp  = WaterProps.cp_from_Ph(w.P, w.h)
-            w_mu  = WaterProps.mu_from_Ph(w.P, w.h)
-            w_k   = WaterProps.k_from_Ph(w.P, w.h)
+            Tw   = WaterProps.T_from_Ph(w.P, w.h)
+            w_cp = WaterProps.cp_from_Ph(w.P, w.h)
+            w_mu = WaterProps.mu_from_Ph(w.P, w.h)
+            w_k  = WaterProps.k_from_Ph(w.P, w.h)
             w_rho = WaterProps.rho_from_Ph(w.P, w.h)
 
-        # gas props
+        # gas props (local i)
         g_h   = _gas.h_sensible(g.T, g.P, g.comp)
         g_cp  = _gas.cp(g.T, g.P, g.comp)
         g_mu  = _gas.mu(g.T, g.P, g.comp)
@@ -55,7 +65,7 @@ def profile_to_dataframe(gp: "GlobalProfile") -> "pd.DataFrame":
             "qprime[W/m]": gp.qprime[i].to("W/m").magnitude,
             "UA_prime[W/K/m]": gp.UA_prime[i].to("W/K/m").magnitude,
 
-            # gas stream state + props
+            # gas stream state + props (local i)
             "gas_T[K]": g.T.to("K").magnitude,
             "gas_P[Pa]": g.P.to("Pa").magnitude,
             "gas_h[J/kg]": g_h.to("J/kg").magnitude,
@@ -64,7 +74,7 @@ def profile_to_dataframe(gp: "GlobalProfile") -> "pd.DataFrame":
             "gas_k[W/m/K]": g_k.to("W/m/K").magnitude,
             "gas_rho[kg/m^3]": g_rho.to("kg/m^3").magnitude,
 
-            # water stream state + props
+            # water stream state + props (from mirrored j)
             "water_h[J/kg]": w.h.to("J/kg").magnitude,
             "water_P[Pa]": w.P.to("Pa").magnitude,
             "water_T[K]": Tw.to("K").magnitude,
@@ -74,10 +84,10 @@ def profile_to_dataframe(gp: "GlobalProfile") -> "pd.DataFrame":
             "water_rho[kg/m^3]": _mag_or_nan(w_rho, "kg/m^3"),
             "water_x[-]": _mag_or_nan(xq, ""),
 
+            # local HTCs and ΔP stay aligned with gas x
             "h_gas[W/m^2/K]": gp.h_g[i].to("W/m^2/K").magnitude,
             "h_water[W/m^2/K]": gp.h_c[i].to("W/m^2/K").magnitude,
 
-            # new gas-side ΔP columns
             "dP_fric[Pa]": gp.dP_fric[i].to("Pa").magnitude,
             "dP_minor[Pa]": gp.dP_minor[i].to("Pa").magnitude,
             "dP_total[Pa]": gp.dP_total[i].to("Pa").magnitude,
@@ -92,6 +102,7 @@ def profile_to_dataframe(gp: "GlobalProfile") -> "pd.DataFrame":
         rows.append(row)
 
     return pd.DataFrame(rows)
+
 
 
 def summary_from_profile(gp: "GlobalProfile") -> tuple[list[dict], float, float]:
