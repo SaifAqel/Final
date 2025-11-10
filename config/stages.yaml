@@ -49,10 +49,10 @@ HX_3:
   tubes_number: { value: 118, unit: dimensionless }
   layout: "triangular"
   arrangement: "inline"
-  N_rows: { value: 4, unit: dimensionless }
-  ST: { value: 0.123, unit: m }
-  SL: { value: 0.123, unit: m }
-  baffle_spacing: { value: 0.105, unit: m }
+  N_rows: { value: 6, unit: dimensionless }
+  ST: { value: 0.11, unit: m }
+  SL: { value: 0.11, unit: m }
+  baffle_spacing: { value: 0.075, unit: m }
   shell_inner_diameter: { value: 1.80, unit: m } # Ds
   baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
   bundle_clearance: { value: 0.010, unit: m }
@@ -103,10 +103,10 @@ HX_5:
   tubes_number: { value: 100, unit: dimensionless }
   layout: "triangular"
   arrangement: "inline"
-  N_rows: { value: 4, unit: dimensionless }
-  ST: { value: 0.123, unit: m }
-  SL: { value: 0.123, unit: m }
-  baffle_spacing: { value: 0.105, unit: m }
+  N_rows: { value: 6, unit: dimensionless }
+  ST: { value: 0.11, unit: m }
+  SL: { value: 0.11, unit: m }
+  baffle_spacing: { value: 0.075, unit: m }
   shell_inner_diameter: { value: 1.80, unit: m } # Ds
   baffle_cut: { value: 0.25, unit: dimensionless } # Bc = L_bch / Ds
   bundle_clearance: { value: 0.010, unit: m }
