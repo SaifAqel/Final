@@ -46,12 +46,20 @@ class GeometryBuilder:
 
                 Ds = spec["shell_inner_diameter"].to("m")
                 B  = spec["baffle_spacing"].to("m")
-                pt = spec["ST"].to("m")
+                ST = spec["ST"].to("m")
+                SL = spec["SL"].to("m")
 
-                FAR = (1 - (Do_t/pt)).to("dimensionless")
+                FAR_T = (1 - (Do_t / ST)).to("")          # transverse open-area ratio
                 A_gross = (Ds * B).to("m^2")
-                A_cross = (A_gross * FAR).to("m^2")
-                spec["umax_factor"] = (A_gross / A_cross).to("dimensionless")  # = 1/FAR
+                A_cross = (A_gross * FAR_T).to("m^2")     # bulk crossflow area
+                arr = (spec.get("arrangement","inline") or "inline").lower()
+                if arr == "staggered":
+                    FAR_L = (1 - (0.5 * Do_t / SL)).to("")    # longitudinal throat for staggered
+                    umax = (ST / (ST - Do_t)) * ((SL / (SL - 0.5*Do_t)) ** 0.5)
+                else:
+                    umax = (ST / (ST - Do_t))
+                spec["umax_factor"] = umax.to("dimensionless")
+
                 spec["roughness_cold_surface"] = spec["roughness_out"]
                 spec["outer_diameter"] = Do_t
 

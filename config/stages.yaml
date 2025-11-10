@@ -47,8 +47,7 @@ HX_3:
   inner_diameter: { value: 0.076, unit: m }
   inner_length: { value: 4.975, unit: m }
   tubes_number: { value: 118, unit: dimensionless }
-  layout: "triangular"
-  arrangement: "inline"
+  arrangement: "staggered"
   N_rows: { value: 6, unit: dimensionless }
   ST: { value: 0.11, unit: m }
   SL: { value: 0.11, unit: m }
@@ -101,8 +100,7 @@ HX_5:
   inner_diameter: { value: 0.076, unit: m }
   inner_length: { value: 5.620, unit: m }
   tubes_number: { value: 100, unit: dimensionless }
-  layout: "triangular"
-  arrangement: "inline"
+  arrangement: "staggered"
   N_rows: { value: 6, unit: dimensionless }
   ST: { value: 0.11, unit: m }
   SL: { value: 0.11, unit: m }
