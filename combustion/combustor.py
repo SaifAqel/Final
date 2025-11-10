@@ -3,8 +3,9 @@ from common.results import CombustionResult
 from common.models import GasStream
 from common.units import Q_
 from combustion.heat import total_input_heat
-from combustion.flue import from_fuel_and_air, air_flow_rates
-from combustion.mass_mole import to_mole, molar_flow
+from combustion.flue import air_flow_rates
+from combustion.adiabatic_flame_temperature import adiabatic_flame_T
+
 
 class Combustor:
     def __init__(self, air: GasStream, fuel: GasStream, excess_air_ratio: Q_):
@@ -24,11 +25,13 @@ class Combustor:
 
         air.mass_flow = air_flow_rates(air, fuel, self.excess_air_ratio)
 
-        flue.comp, flue.mass_flow = from_fuel_and_air(fuel, air)
-
         power_LHV, Q_in = total_input_heat(fuel, air)
 
-        T_ad = adiabatic_flame_T(flue, Q_in)
+
+        # compute flue directly from air and fuel streams
+        flue = adiabatic_flame_T(air, fuel)
+        T_ad = flue.T
+
 
         flue.T = T_ad
         flue.P = air.P

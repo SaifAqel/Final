@@ -1,5 +1,9 @@
 results/
 figs/
+inputs.md
+inputs.pdf
+report.md
+report.pdf
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
