@@ -77,14 +77,14 @@ def run_hx(
         import pandas as pd
         pd.DataFrame(rows, columns=[
             "stage_index","stage_name","stage_kind",
-            "Q_stage[W]","UA_stage[W/K]",
-            "gas_in_T[K]","gas_out_T[K]",
-            "water_in_h[J/kg]","water_out_h[J/kg]",
+            "Q_stage[MW]","UA_stage[MW/K]",
+            "gas_in_T[°C]","gas_out_T[°C]",
+            "water_in_h[kJ/kg]","water_out_h[kJ/kg]",
             "ΔP_stage_fric[Pa]","ΔP_stage_minor[Pa]","ΔP_stage_total[Pa]",
-            "Q_conv_stage[W]","Q_rad_stage[W]",
+            "Q_conv_stage[MW]","Q_rad_stage[MW]",
             "η_direct[-]","η_indirect[-]",
-            "Q_total_useful[W]","Q_in_total[W]",
-            "P_LHV[W]","LHV_mass[kJ/kg]",
+            "Q_total_useful[MW]","Q_in_total[MW]",
+            "P_LHV[MW]","LHV_mass[kJ/kg]",
         ]).to_csv(summary_path, index=False)
 
 

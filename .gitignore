@@ -6,6 +6,7 @@ report.md
 report.pdf
 results.xlsx
 formulas.md
+formulas.pdf
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

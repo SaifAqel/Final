@@ -106,10 +106,10 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
             "UA_prime[W/K/m]": gp.UA_prime[i].to("W/K/m").magnitude,
 
             # gas stream state + props (local i)
-            "gas_T[K]": g.T.to("K").magnitude,
+            "gas_T[degC]": g.T.to("degC").magnitude,
             "gas_P[Pa]": g.P.to("Pa").magnitude,
-            "gas_h[J/kg]": g_h.to("J/kg").magnitude,
-            "gas_cp[J/kg/K]": g_cp.to("J/kg/K").magnitude,
+            "gas_h[kJ/kg]": g_h.to("kJ/kg").magnitude,
+            "gas_cp[kJ/kg/K]": g_cp.to("kJ/kg/K").magnitude,
             "gas_mu[Pa*s]": g_mu.to("Pa*s").magnitude,
             "gas_k[W/m/K]": g_k.to("W/m/K").magnitude,
             "gas_rho[kg/m^3]": g_rho.to("kg/m^3").magnitude,
@@ -120,10 +120,10 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
             "gas_eps[-]": gas_eps,
 
             # water stream state + props (from mirrored j)
-            "water_h[J/kg]": w.h.to("J/kg").magnitude,
+            "water_h[kJ/kg]": w.h.to("kJ/kg").magnitude,
             "water_P[Pa]": w.P.to("Pa").magnitude,
-            "water_T[K]": Tw.to("K").magnitude,
-            "water_cp[J/kg/K]": _mag_or_nan(w_cp, "J/kg/K"),
+            "water_T[degC]": Tw.to("degC").magnitude,
+            "water_cp[kJ/kg/K]": _mag_or_nan(w_cp, "kJ/kg/K"),
             "water_mu[Pa*s]": _mag_or_nan(w_mu, "Pa*s"),
             "water_k[W/m/K]": _mag_or_nan(w_k, "W/m/K"),
             "water_rho[kg/m^3]": _mag_or_nan(w_rho, "kg/m^3"),
@@ -168,12 +168,12 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         name = gp.stage_name[idxs[0]]
 
         # integrals
-        Q_stage = sum((gp.qprime[i] * gp.dx[i]).to("W").magnitude for i in idxs)
-        UA_stage = sum((gp.UA_prime[i] * gp.dx[i]).to("W/K").magnitude for i in idxs)
+        Q_stage = sum((gp.qprime[i] * gp.dx[i]).to("MW").magnitude for i in idxs)
+        UA_stage = sum((gp.UA_prime[i] * gp.dx[i]).to("MW/K").magnitude for i in idxs)
 
         sr_stage = gp.stage_results[k]
-        Q_stage_conv = sum((st.qprime_conv * st.dx).to("W").magnitude for st in sr_stage.steps)
-        Q_stage_rad  = sum((st.qprime_rad  * st.dx).to("W").magnitude for st in sr_stage.steps)
+        Q_stage_conv = sum((st.qprime_conv * st.dx).to("MW").magnitude for st in sr_stage.steps)
+        Q_stage_rad  = sum((st.qprime_rad  * st.dx).to("MW").magnitude for st in sr_stage.steps)
 
         # ΔP sums
         dP_fric = sum(gp.dP_fric[i].to("Pa").magnitude for i in idxs)
@@ -181,32 +181,32 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         dP_total = sum(gp.dP_total[i].to("Pa").magnitude for i in idxs)
 
         # endpoints along gas x in this stage
-        gas_in_T = gp.gas[idxs[0]].T.to("K").magnitude
-        gas_out_T = gp.gas[idxs[-1]].T.to("K").magnitude
-        water_in_h = gp.water[idxs[-1]].h.to("J/kg").magnitude   # counter-current at x=L
-        water_out_h = gp.water[idxs[0]].h.to("J/kg").magnitude   # counter-current at x=0
+        gas_in_T = gp.gas[idxs[0]].T.to("degC").magnitude
+        gas_out_T = gp.gas[idxs[-1]].T.to("degC").magnitude
+        water_in_h = gp.water[idxs[-1]].h.to("kJ/kg").magnitude   # counter-current at x=L
+        water_out_h = gp.water[idxs[0]].h.to("kJ/kg").magnitude   # counter-current at x=0
 
         row = {
             "stage_index": k,
             "stage_name": name,
             "stage_kind": "",
-            "Q_stage[W]": Q_stage,
-            "UA_stage[W/K]": UA_stage,
-            "gas_in_T[K]": gas_in_T,
-            "gas_out_T[K]": gas_out_T,
-            "water_in_h[J/kg]": water_in_h,
-            "water_out_h[J/kg]": water_out_h,
+            "Q_stage[MW]": Q_stage,
+            "UA_stage[MW/K]": UA_stage,
+            "gas_in_T[°C]": gas_in_T,
+            "gas_out_T[°C]": gas_out_T,
+            "water_in_h[kJ/kg]": water_in_h,
+            "water_out_h[kJ/kg]": water_out_h,
             # new ΔP stage totals
             "ΔP_stage_fric[Pa]": dP_fric,
             "ΔP_stage_minor[Pa]": dP_minor,
             "ΔP_stage_total[Pa]": dP_total,
-            "Q_conv_stage[W]": Q_stage_conv,
-            "Q_rad_stage[W]": Q_stage_rad,
+            "Q_conv_stage[MW]": Q_stage_conv,
+            "Q_rad_stage[MW]": Q_stage_rad,
             "η_direct[-]": "",
             "η_indirect[-]": "",
-            "Q_total_useful[W]": "",
-            "Q_in_total[W]": "",
-            "P_LHV[W]": "",
+            "Q_total_useful[MW]": "",
+            "Q_in_total[MW]": "",
+            "P_LHV[MW]": "",
             "LHV_mass[kJ/kg]": "",
         }
         rows.append(row)
@@ -227,13 +227,13 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
 
     if combustion is not None:
         # Q_in is currently in kW
-        Q_in_total = combustion.Q_in.to("W").magnitude
+        Q_in_total = combustion.Q_in.to("MW").magnitude
 
         # firing capacity based on LHV (kW) – try fuel_P_LHV if present, else LHV field
         if combustion.fuel_P_LHV is not None:
-            P_LHV_W = combustion.fuel_P_LHV.to("W").magnitude
+            P_LHV_W = combustion.fuel_P_LHV.to("MW").magnitude
         else:
-            P_LHV_W = combustion.LHV.to("W").magnitude
+            P_LHV_W = combustion.LHV.to("MW").magnitude
 
         # mass-based LHV if available
         if combustion.fuel_LHV_mass is not None:
@@ -251,22 +251,22 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         "stage_index": "",
         "stage_name": "TOTAL_BOILER",
         "stage_kind": "",
-        "Q_stage[W]": Q_useful,
-        "UA_stage[W/K]": UA_total,
-        "gas_in_T[K]": "",
-        "gas_out_T[K]": "",
-        "water_in_h[J/kg]": "",
-        "water_out_h[J/kg]": "",
+        "Q_stage[MW]": Q_useful,
+        "UA_stage[MW/K]": UA_total,
+        "gas_in_T[°C]": "",
+        "gas_out_T[°C]": "",
+        "water_in_h[kJ/kg]": "",
+        "water_out_h[kJ/kg]": "",
         "ΔP_stage_fric[Pa]": "",
         "ΔP_stage_minor[Pa]": "",
         "ΔP_stage_total[Pa]": "",
-        "Q_conv_stage[W]": Q_total_conv,
-        "Q_rad_stage[W]": Q_total_rad,
+        "Q_conv_stage[MW]": Q_total_conv,
+        "Q_rad_stage[MW]": Q_total_rad,
         "η_direct[-]": eta_direct if eta_direct is not None else "",
         "η_indirect[-]": eta_indirect if eta_indirect is not None else "",
-        "Q_total_useful[W]": Q_useful,
-        "Q_in_total[W]": Q_in_total if Q_in_total is not None else "",
-        "P_LHV[W]": P_LHV_W if P_LHV_W is not None else "",
+        "Q_total_useful[MW]": Q_useful,
+        "Q_in_total[MW]": Q_in_total if Q_in_total is not None else "",
+        "P_LHV[MW]": P_LHV_W if P_LHV_W is not None else "",
         "LHV_mass[kJ/kg]": LHV_mass_kJkg if LHV_mass_kJkg is not None else "",
     }
     rows.append(total_row)
