@@ -5,8 +5,6 @@ from common.units import Q_
 from common.models import GasStream, WaterStream
 from pathlib import Path
 import pandas as pd
-from common.results import GlobalProfile, CombustionResult
-from heat.postproc import profile_to_dataframe, summary_from_profile
 
 
 @dataclass(frozen=True)
@@ -132,23 +130,33 @@ def write_results_csvs(
     run_id: str,
 ) -> Tuple[str, str]:
     """
-    Write step-level and stage summary CSVs.
+    Write CSVs:
+      - <run_id>_steps.csv           : step-level data (unchanged).
+      - <run_id>_stages_summary.csv  : per-stage summary (no TOTAL_BOILER row).
+      - <run_id>_boiler_summary.csv  : single-row boiler summary, based on
+                                       TOTAL_BOILER with extra boiler-level data.
 
     Returns:
-        (steps_csv_path, summary_csv_path) as strings.
+        (steps_csv_path, stages_summary_csv_path) as strings.
     """
+    from heat.postproc import profile_to_dataframe, summary_from_profile
+
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
+    # 1) Paths
     steps_path = outdir / f"{run_id}_steps.csv"
-    summary_path = outdir / f"{run_id}_summary.csv"
+    stages_summary_path = outdir / f"{run_id}_stages_summary.csv"
+    boiler_summary_path = outdir / f"{run_id}_boiler_summary.csv"
 
+    # 2) Build step dataframe (unchanged)
     df_steps = profile_to_dataframe(global_profile, remap_water=True)
-    rows, _, _ = summary_from_profile(global_profile, combustion=combustion)
-
     df_steps.to_csv(steps_path, index=False)
 
-    pd.DataFrame(
+    # 3) Get summary rows (unchanged structure: stages + TOTAL_BOILER at the end)
+    rows, _, _ = summary_from_profile(global_profile, combustion=combustion)
+
+    df_summary = pd.DataFrame(
         rows,
         columns=[
             "stage_index", "stage_name", "stage_kind",
@@ -161,6 +169,63 @@ def write_results_csvs(
             "Q_total_useful[MW]", "Q_in_total[MW]",
             "P_LHV[MW]", "LHV_mass[kJ/kg]",
         ],
-    ).to_csv(summary_path, index=False)
+    )
 
-    return str(steps_path), str(summary_path)
+    # 4) Split into stage rows and TOTAL_BOILER row
+    df_stages = df_summary[df_summary["stage_name"] != "TOTAL_BOILER"].copy()
+    df_boiler = df_summary[df_summary["stage_name"] == "TOTAL_BOILER"].copy()
+
+    # 4a) Write stages summary (same columns as before, just no TOTAL_BOILER)
+    df_stages.to_csv(stages_summary_path, index=False)
+
+    # 4b) Build boiler summary in "column" fashion, with added boiler-level data
+    if not df_boiler.empty:
+        # Start from the TOTAL_BOILER row
+        boiler_row = df_boiler.iloc[0].copy()
+
+        # Add water mass flow (taken as constant from first water snapshot)
+        try:
+            m_w = global_profile.water[0].mass_flow.to("kg/s").magnitude
+        except Exception:
+            m_w = float("nan")
+        boiler_row["water_mass_flow[kg/s]"] = m_w
+
+        # Add combustion-related scalars if available
+        if combustion is not None:
+            # Adiabatic flame temperature
+            try:
+                boiler_row["T_ad[°C]"] = combustion.T_ad.to("degC").magnitude
+            except Exception:
+                boiler_row["T_ad[°C]"] = ""
+
+            # Mass-based LHV of fuel (if provided)
+            if combustion.fuel_LHV_mass is not None:
+                boiler_row["fuel_LHV_mass[kJ/kg]"] = combustion.fuel_LHV_mass.to("kJ/kg").magnitude
+            else:
+                boiler_row["fuel_LHV_mass[kJ/kg]"] = ""
+
+            # Firing capacity based on LHV (if provided)
+            if combustion.fuel_P_LHV is not None:
+                boiler_row["fuel_P_LHV[MW]"] = combustion.fuel_P_LHV.to("MW").magnitude
+            else:
+                boiler_row["fuel_P_LHV[MW]"] = ""
+        else:
+            boiler_row["T_ad[°C]"] = ""
+            boiler_row["fuel_LHV_mass[kJ/kg]"] = ""
+            boiler_row["fuel_P_LHV[MW]"] = ""
+
+        # Single-row boiler summary CSV
+        pd.DataFrame([boiler_row]).to_csv(boiler_summary_path, index=False)
+    else:
+        # No TOTAL_BOILER row – write an empty boiler summary with the same columns
+        empty_cols = list(df_summary.columns) + [
+            "water_mass_flow[kg/s]",
+            "T_ad[°C]",
+            "fuel_LHV_mass[kJ/kg]",
+            "fuel_P_LHV[MW]",
+        ]
+        pd.DataFrame(columns=empty_cols).to_csv(boiler_summary_path, index=False)
+
+    # Keep function return type: second return value now points to stages_summary
+    return str(steps_path), str(stages_summary_path), str(boiler_summary_path)   
+

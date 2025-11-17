@@ -148,7 +148,7 @@ final_result = run_hx(
 
 result = final_result
 
-steps_csv, summary_csv = write_results_csvs(
+steps_csv, stages_summary_csv, boiler_summary_csv = write_results_csvs(
     global_profile=result["global_profile"],
     combustion=result["combustion"],
     outdir=result["outdir"],
