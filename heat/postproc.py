@@ -181,27 +181,65 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         dP_total = sum(gp.dP_total[i].to("Pa").magnitude for i in idxs)
 
         # endpoints along gas x in this stage
-        gas_in_T = gp.gas[idxs[0]].T.to("degC").magnitude
-        gas_out_T = gp.gas[idxs[-1]].T.to("degC").magnitude
-        water_in_h = gp.water[idxs[-1]].h.to("kJ/kg").magnitude   # counter-current at x=L
-        water_out_h = gp.water[idxs[0]].h.to("kJ/kg").magnitude   # counter-current at x=0
+        g_in  = gp.gas[idxs[0]]
+        g_out = gp.gas[idxs[-1]]
+
+        # gas endpoints: P, T, h (sensible), in/out
+        gas_in_T  = g_in.T.to("degC").magnitude
+        gas_out_T = g_out.T.to("degC").magnitude
+        gas_in_P  = g_in.P.to("Pa").magnitude
+        gas_out_P = g_out.P.to("Pa").magnitude
+
+        gas_in_h  = _gas.h_sensible(g_in.T,  g_in.P,  g_in.comp).to("kJ/kg").magnitude
+        gas_out_h = _gas.h_sensible(g_out.T, g_out.P, g_out.comp).to("kJ/kg").magnitude
+
+        # water endpoints: counter-current (water inlet at gas x=L)
+        w_in  = gp.water[idxs[-1]]   # water inlet
+        w_out = gp.water[idxs[0]]    # water outlet
+
+        water_in_h  = w_in.h.to("kJ/kg").magnitude
+        water_out_h = w_out.h.to("kJ/kg").magnitude
+
+        water_in_P  = w_in.P.to("Pa").magnitude
+        water_out_P = w_out.P.to("Pa").magnitude
+
+        water_in_T  = WaterProps.T_from_Ph(w_in.P,  w_in.h).to("degC").magnitude
+        water_out_T = WaterProps.T_from_Ph(w_out.P, w_out.h).to("degC").magnitude
 
         row = {
             "stage_index": k,
             "stage_name": name,
             "stage_kind": gp.stage_results[k].stage_kind,
+
             "Q_stage[MW]": Q_stage,
             "UA_stage[MW/K]": UA_stage,
+
+            # gas endpoints
+            "gas_in_P[Pa]": gas_in_P,
             "gas_in_T[°C]": gas_in_T,
+            "gas_in_h[kJ/kg]": gas_in_h,
+            "gas_out_P[Pa]": gas_out_P,
             "gas_out_T[°C]": gas_out_T,
+            "gas_out_h[kJ/kg]": gas_out_h,
+
+            # water endpoints (counter-current)
+            "water_in_P[Pa]": water_in_P,
+            "water_in_T[°C]": water_in_T,
             "water_in_h[kJ/kg]": water_in_h,
+            "water_out_P[Pa]": water_out_P,
+            "water_out_T[°C]": water_out_T,
             "water_out_h[kJ/kg]": water_out_h,
-            # new ΔP stage totals
+
+            # ΔP stage totals
             "ΔP_stage_fric[Pa]": dP_fric,
             "ΔP_stage_minor[Pa]": dP_minor,
             "ΔP_stage_total[Pa]": dP_total,
+
+            # heat splits
             "Q_conv_stage[MW]": Q_stage_conv,
             "Q_rad_stage[MW]": Q_stage_rad,
+
+            # boiler-level fields (blank at stage level)
             "η_direct[-]": "",
             "η_indirect[-]": "",
             "Q_total_useful[MW]": "",
@@ -209,6 +247,7 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
             "P_LHV[MW]": "",
             "LHV_mass[kJ/kg]": "",
         }
+        
         rows.append(row)
         Q_total += Q_stage
         UA_total += UA_stage
@@ -251,17 +290,31 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         "stage_index": "",
         "stage_name": "TOTAL_BOILER",
         "stage_kind": "",
+
         "Q_stage[MW]": Q_useful,
         "UA_stage[MW/K]": UA_total,
+
+        # endpoints not meaningful at TOTAL_BOILER level
+        "gas_in_P[Pa]": "",
         "gas_in_T[°C]": "",
+        "gas_in_h[kJ/kg]": "",
+        "gas_out_P[Pa]": "",
         "gas_out_T[°C]": "",
+        "gas_out_h[kJ/kg]": "",
+        "water_in_P[Pa]": "",
+        "water_in_T[°C]": "",
         "water_in_h[kJ/kg]": "",
+        "water_out_P[Pa]": "",
+        "water_out_T[°C]": "",
         "water_out_h[kJ/kg]": "",
+
         "ΔP_stage_fric[Pa]": "",
         "ΔP_stage_minor[Pa]": "",
         "ΔP_stage_total[Pa]": "",
+
         "Q_conv_stage[MW]": Q_total_conv,
         "Q_rad_stage[MW]": Q_total_rad,
+
         "η_direct[-]": eta_direct if eta_direct is not None else "",
         "η_indirect[-]": eta_indirect if eta_indirect is not None else "",
         "Q_total_useful[MW]": Q_useful,
@@ -269,6 +322,8 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         "P_LHV[MW]": P_LHV_W if P_LHV_W is not None else "",
         "LHV_mass[kJ/kg]": LHV_mass_kJkg if LHV_mass_kJkg is not None else "",
     }
+
+
     rows.append(total_row)
 
     return rows, Q_total, UA_total
