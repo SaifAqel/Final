@@ -11,7 +11,11 @@ def solve_step(g: GasStream, w: WaterStream, stage: HXStage, Tgw_guess: Q_, Tww_
     Pg = spec["hot_wet_P"]
     Pw = spec["cold_wet_P"]
     Tg = g.T
-    Tw = WaterProps.T_from_Ph(w.P, w.h)
+    if stage.spec["pool_boiling"]:
+        # bulk water = pool at Tsat
+        Tw = WaterProps.Tsat(w.P)
+    else:
+        Tw = WaterProps.T_from_Ph(w.P, w.h)
     Tgw = Tgw_guess
     Tww = Tww_guess
     qprime = qprime_guess

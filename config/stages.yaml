@@ -1,5 +1,6 @@
 HX_1:
   kind: "single_tube"
+  pool_boiling: true
   inner_diameter: { value: 1.4, unit: m }
   inner_length: { value: 5.276, unit: m }
   wall:
@@ -19,6 +20,7 @@ HX_1:
 
 HX_2:
   kind: "reversal_chamber"
+  pool_boiling: true
   inner_diameter: { value: 1.6, unit: m }
   inner_length: { value: 0.8, unit: m }
   curvature_radius: { value: 0.8, unit: m }
@@ -44,6 +46,7 @@ HX_2:
 
 HX_3:
   kind: "tube_bank"
+  pool_boiling: true
   inner_diameter: { value: 0.076, unit: m }
   inner_length: { value: 4.975, unit: m }
   tubes_number: { value: 118, unit: dimensionless }
@@ -72,6 +75,7 @@ HX_3:
 
 HX_4:
   kind: "reversal_chamber"
+  pool_boiling: true
   inner_diameter: { value: 1.6, unit: m }
   inner_length: { value: 0.8, unit: m }
   curvature_radius: { value: 0.8, unit: m }
@@ -97,6 +101,7 @@ HX_4:
 
 HX_5:
   kind: "tube_bank"
+  pool_boiling: true
   inner_diameter: { value: 0.076, unit: m }
   inner_length: { value: 5.620, unit: m }
   tubes_number: { value: 100, unit: dimensionless }
@@ -125,6 +130,7 @@ HX_5:
 
 HX_6:
   kind: "economiser"
+  pool_boiling: false
   inner_diameter: { value: 0.076, unit: m } # unchanged
   inner_length: { value: 7.5, unit: m } # was 5.620
   tubes_number: { value: 160, unit: dimensionless } # was 100

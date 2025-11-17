@@ -207,6 +207,12 @@ def _h_water_boil_cooper(P: Q_, qpp: Q_, Rp: Q_) -> Q_:
     return Q_(h_kWm2K, "kW/m^2/K").to("W/m^2/K")
 
 def water_htc(w: WaterStream, stage: HXStage, T_wall: Q_, qpp: Q_) -> tuple[Q_, bool]:
+    if stage.spec["pool_boiling"]:
+        # Use pure pool boiling HTC (Cooper) at Tsat
+        Rp = stage.spec["roughness_cold_surface"]
+        h_nb = _h_water_boil_cooper(w.P, qpp, Rp)
+        return h_nb, True   # mark as boiling, no checks
+
     boiling = _is_boiling(w.P, w.h, T_wall)
     if boiling:
         h_lo = _h_liquid_only(w, stage, T_wall)

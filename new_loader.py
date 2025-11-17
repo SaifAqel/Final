@@ -76,6 +76,7 @@ def load_stages(path: str) -> List[HXStage]:
             "inner_diameter": _q(node["inner_diameter"]),
             "inner_length":   _q(node["inner_length"]),
         }
+        if "pool_boiling" in node:         spec["pool_boiling"]     = bool(node["pool_boiling"])
         if "curvature_radius" in node:     spec["curvature_radius"] = _q(node["curvature_radius"])
         if "tubes_number" in node:         spec["tubes_number"]     = _q(node["tubes_number"])
         if "ST" in node:                   spec["ST"]               = _q(node["ST"])

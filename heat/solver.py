@@ -57,7 +57,6 @@ def _copy_step_with_stage(
 
 # ---------------------- wall guesses ------------------------
 
-@trace_calls(values=True)
 def initial_wall_guesses(g: GasStream, w: WaterStream) -> tuple[Q_, Q_, Q_]:
     """
     First-call initial guesses for wall state.
@@ -65,7 +64,8 @@ def initial_wall_guesses(g: GasStream, w: WaterStream) -> tuple[Q_, Q_, Q_]:
     """
     Tg = g.T.to("K")
     Tw = WaterProps.T_from_Ph(w.P, w.h).to("K")
-    return Tg, Tw, Q_(0.0, "W/m")
+    qprime = Q_(1e4, "W/m")
+    return Tg, Tw, qprime
 
 
 # -------------------- gas-side ΔP model ---------------------
@@ -194,7 +194,6 @@ def _solve_T_for_h(P, X, h_target, T0, maxit=30):
         T  = (T + 0.8*dT).to("K")            # mild damping
     return T
 
-@trace_calls(values=True)
 def update_gas_after_step(g, qprime, dx, stage):
     Q_step = (qprime * dx).to("W")           # W = J/s
     dh     = (-Q_step / g.mass_flow).to("J/kg")
@@ -205,7 +204,6 @@ def update_gas_after_step(g, qprime, dx, stage):
     return GasStream(mass_flow=g.mass_flow, T=T_new, P=P_new, comp=g.comp)
 
 
-@trace_calls(values=True)
 def update_water_after_step(w: WaterStream, qprime: Q_, dx: Q_, stage: HXStage) -> WaterStream:
     """
     Apply energy change to the water after a differential step.
@@ -219,7 +217,6 @@ def update_water_after_step(w: WaterStream, qprime: Q_, dx: Q_, stage: HXStage) 
 
 # ------------------------ stage solve -----------------------
 
-@trace_calls(values=True)
 def solve_stage(
     g_in: GasStream,
     w_in: WaterStream,
@@ -339,7 +336,6 @@ def solve_stage(
 
 # ---------------------- exchanger solve ---------------------
 
-@trace_calls(values=True)
 def solve_exchanger(
     stages: List[HXStage],
     gas_in: GasStream,
