@@ -171,9 +171,23 @@ def write_results_csvs(
         ],
     )
 
-    # 4) Split into stage rows and TOTAL_BOILER row
-    df_stages = df_summary[df_summary["stage_name"] != "TOTAL_BOILER"].copy()
+    # 4) Split into:
+    #    - pure per-stage table (no TOTAL_BOILER, no boiler-only columns)
+    #    - boiler row (TOTAL_BOILER), later turned into boiler summary
+    stage_cols = [
+        "stage_index", "stage_name", "stage_kind",
+        "Q_stage[MW]", "UA_stage[MW/K]",
+        "gas_in_T[°C]", "gas_out_T[°C]",
+        "water_in_h[kJ/kg]", "water_out_h[kJ/kg]",
+        "ΔP_stage_fric[Pa]", "ΔP_stage_minor[Pa]", "ΔP_stage_total[Pa]",
+        "Q_conv_stage[MW]", "Q_rad_stage[MW]",
+    ]
+    # keep only columns that actually exist (defensive)
+    stage_cols = [c for c in stage_cols if c in df_summary.columns]
+
+    df_stages = df_summary[df_summary["stage_name"] != "TOTAL_BOILER"][stage_cols].copy()
     df_boiler = df_summary[df_summary["stage_name"] == "TOTAL_BOILER"].copy()
+
 
     # 4a) Write stages summary (same columns as before, just no TOTAL_BOILER)
     df_stages.to_csv(stages_summary_path, index=False)
