@@ -21,4 +21,5 @@ result = run_hx(
     gas=combustion_results.flue,
     drum=drum,
     target_dx="0.1 m",
+    combustion=combustion_results,
 )

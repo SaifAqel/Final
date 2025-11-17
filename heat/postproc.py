@@ -1,7 +1,7 @@
 # postproc.py
 from __future__ import annotations
 import pandas as pd
-from common.results import GlobalProfile
+from common.results import GlobalProfile, CombustionResult
 from common.props import WaterProps, GasProps
 from common.units import Q_
 from heat.gas_htc import emissivity 
@@ -155,10 +155,12 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
 
 
 
-def summary_from_profile(gp: "GlobalProfile") -> tuple[list[dict], float, float]:
+def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | None = None,) -> tuple[list[dict], float, float]:
     rows = []
     Q_total = 0.0
     UA_total = 0.0
+    Q_total_conv = 0.0
+    Q_total_rad  = 0.0 
 
     import itertools
     for k, grp in itertools.groupby(range(len(gp.x)), key=lambda i: gp.stage_index[i]):
@@ -168,6 +170,10 @@ def summary_from_profile(gp: "GlobalProfile") -> tuple[list[dict], float, float]
         # integrals
         Q_stage = sum((gp.qprime[i] * gp.dx[i]).to("W").magnitude for i in idxs)
         UA_stage = sum((gp.UA_prime[i] * gp.dx[i]).to("W/K").magnitude for i in idxs)
+
+        sr_stage = gp.stage_results[k]
+        Q_stage_conv = sum((st.qprime_conv * st.dx).to("W").magnitude for st in sr_stage.steps)
+        Q_stage_rad  = sum((st.qprime_rad  * st.dx).to("W").magnitude for st in sr_stage.steps)
 
         # ΔP sums
         dP_fric = sum(gp.dP_fric[i].to("Pa").magnitude for i in idxs)
@@ -194,9 +200,75 @@ def summary_from_profile(gp: "GlobalProfile") -> tuple[list[dict], float, float]
             "ΔP_stage_fric[Pa]": dP_fric,
             "ΔP_stage_minor[Pa]": dP_minor,
             "ΔP_stage_total[Pa]": dP_total,
+            "Q_conv_stage[W]": Q_stage_conv,
+            "Q_rad_stage[W]": Q_stage_rad,
+            "η_direct[-]": "",
+            "η_indirect[-]": "",
+            "Q_total_useful[W]": "",
+            "Q_in_total[W]": "",
+            "P_LHV[W]": "",
+            "LHV_mass[kJ/kg]": "",
         }
         rows.append(row)
         Q_total += Q_stage
         UA_total += UA_stage
+        Q_total_conv += Q_stage_conv
+        Q_total_rad  += Q_stage_rad
+
+    # Global boiler useful duty (W)
+    Q_useful = Q_total
+
+    # Default values if no combustion info
+    Q_in_total = None
+    P_LHV_W = None
+    LHV_mass_kJkg = None
+    eta_direct = None
+    eta_indirect = None
+
+    if combustion is not None:
+        # Q_in is currently in kW
+        Q_in_total = combustion.Q_in.to("W").magnitude
+
+        # firing capacity based on LHV (kW) – try fuel_P_LHV if present, else LHV field
+        if combustion.fuel_P_LHV is not None:
+            P_LHV_W = combustion.fuel_P_LHV.to("W").magnitude
+        else:
+            P_LHV_W = combustion.LHV.to("W").magnitude
+
+        # mass-based LHV if available
+        if combustion.fuel_LHV_mass is not None:
+            LHV_mass_kJkg = combustion.fuel_LHV_mass.to("kJ/kg").magnitude
+
+        # Direct efficiency: useful duty / firing capacity (LHV basis)
+        if P_LHV_W and P_LHV_W > 0.0:
+            eta_direct = Q_useful / P_LHV_W
+
+        # Approximate indirect efficiency: useful duty / total input heat
+        if Q_in_total and Q_in_total > 0.0:
+            eta_indirect = Q_useful / Q_in_total
+
+    total_row = {
+        "stage_index": "",
+        "stage_name": "TOTAL_BOILER",
+        "stage_kind": "",
+        "Q_stage[W]": Q_useful,
+        "UA_stage[W/K]": UA_total,
+        "gas_in_T[K]": "",
+        "gas_out_T[K]": "",
+        "water_in_h[J/kg]": "",
+        "water_out_h[J/kg]": "",
+        "ΔP_stage_fric[Pa]": "",
+        "ΔP_stage_minor[Pa]": "",
+        "ΔP_stage_total[Pa]": "",
+        "Q_conv_stage[W]": Q_total_conv,
+        "Q_rad_stage[W]": Q_total_rad,
+        "η_direct[-]": eta_direct if eta_direct is not None else "",
+        "η_indirect[-]": eta_indirect if eta_indirect is not None else "",
+        "Q_total_useful[W]": Q_useful,
+        "Q_in_total[W]": Q_in_total if Q_in_total is not None else "",
+        "P_LHV[W]": P_LHV_W if P_LHV_W is not None else "",
+        "LHV_mass[kJ/kg]": LHV_mass_kJkg if LHV_mass_kJkg is not None else "",
+    }
+    rows.append(total_row)
 
     return rows, Q_total, UA_total

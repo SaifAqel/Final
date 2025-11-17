@@ -4,7 +4,7 @@ from common.models import HXStage, GasStream, WaterStream
 from heat.physics import wall_resistance, fouling_resistances
 from heat.water_htc import water_htc
 from common.props import WaterProps
-from heat.gas_htc import gas_htc
+from heat.gas_htc import gas_htc, gas_htc_parts
 
 def solve_step(g: GasStream, w: WaterStream, stage: HXStage, Tgw_guess: Q_, Tww_guess: Q_, qprime_guess: Q_, i: int, x: Q_, dx: Q_) -> StepResult:
     spec = stage.spec
@@ -45,6 +45,20 @@ def solve_step(g: GasStream, w: WaterStream, stage: HXStage, Tgw_guess: Q_, Tww_
         Tgw = (alpha*Tgw_new + (1-alpha)*Tgw).to("K")
         Tww = (alpha*Tww_new + (1-alpha)*Tww).to("K")
         qprime = (alpha*qprime_new + (1-alpha)*qprime).to("W/m")
+    # After convergence, decompose gas-side HTC into convective and radiative parts
+    h_conv, h_rad = gas_htc_parts(g, spec, Tgw)
+    h_g = (h_conv + h_rad).to("W/m^2/K")  # total gas-side HTC, keep as before for diagnostics
+
+    # Split q′ between convection and radiation based on HTC ratio
+    h_tot_mag = h_g.to("W/m^2/K").magnitude
+    if h_tot_mag > 0:
+        frac_conv = (h_conv / h_g).to("").magnitude
+        frac_conv = max(0.0, min(1.0, frac_conv))
+    else:
+        frac_conv = 0.0
+
+    qprime_conv = (qprime * frac_conv).to("W/m")
+    qprime_rad  = (qprime - qprime_conv).to("W/m")
 
     return StepResult(
         i=i, x=x, dx=dx,
@@ -53,6 +67,8 @@ def solve_step(g: GasStream, w: WaterStream, stage: HXStage, Tgw_guess: Q_, Tww_
         UA_prime=UA_prime,
         qprime=qprime,
         boiling=boiling,
-        h_g=h_g,                 # <-- add
-        h_c=h_c                  # <-- add
+        h_g=h_g,
+        h_c=h_c,
+        qprime_conv=qprime_conv,
+        qprime_rad=qprime_rad,
     )

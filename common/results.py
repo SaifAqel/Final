@@ -10,6 +10,8 @@ class CombustionResult:
     Q_in: Q_
     T_ad: Q_
     flue: GasStream
+    fuel_LHV_mass: Q_ | None = None   # e.g. kJ/kg
+    fuel_P_LHV: Q_ | None = None 
 
 # ---------------- Streams are imported from common.models ----------------
 
@@ -38,6 +40,9 @@ class StepResult:
     dP_fric: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
     dP_minor: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
     dP_total: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
+
+    qprime_conv: Q_ = field(default_factory=lambda: Q_(0.0, "W/m"))
+    qprime_rad: Q_ = field(default_factory=lambda: Q_(0.0, "W/m"))
 
 @dataclass(frozen=True)
 class StageResult:

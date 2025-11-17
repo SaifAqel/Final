@@ -6,7 +6,7 @@ from common.units import Q_
 from heat.geometry import GeometryBuilder
 from heat.solver import solve_exchanger
 from common.models import HXStage, WaterStream, GasStream, Drum
-from common.results import build_global_profile
+from common.results import build_global_profile,CombustionResult
 from heat.postproc import profile_to_dataframe, summary_from_profile
 
 
@@ -33,6 +33,7 @@ def run_hx(
     outdir: str | Path = "results",
     run_id: str | None = None,
     log_level: str = "INFO",
+    combustion: CombustionResult | None = None,
 ) -> Dict[str, Any]:
     
     outdir = Path(outdir)
@@ -69,7 +70,7 @@ def run_hx(
 
     global_profile = build_global_profile(stage_results)
     df_steps = profile_to_dataframe(global_profile)
-    rows, _, _ = summary_from_profile(global_profile)
+    rows, _, _ = summary_from_profile(global_profile, combustion=combustion)
 
     if write_csv:
         df_steps.to_csv(steps_path, index=False)
@@ -80,6 +81,10 @@ def run_hx(
             "gas_in_T[K]","gas_out_T[K]",
             "water_in_h[J/kg]","water_out_h[J/kg]",
             "ΔP_stage_fric[Pa]","ΔP_stage_minor[Pa]","ΔP_stage_total[Pa]",
+            "Q_conv_stage[W]","Q_rad_stage[W]",
+            "η_direct[-]","η_indirect[-]",
+            "Q_total_useful[W]","Q_in_total[W]",
+            "P_LHV[W]","LHV_mass[kJ/kg]",
         ]).to_csv(summary_path, index=False)
 
 
@@ -96,4 +101,5 @@ def run_hx(
         "summary_csv": str(summary_path) if write_csv else None,
         "run_id": run_id,
         "outdir": str(outdir),
+        "combustion": combustion,
     }
