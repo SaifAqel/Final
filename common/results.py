@@ -1,8 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import List, Sequence
+from typing import List, Sequence, Tuple
 from common.units import Q_
 from common.models import GasStream, WaterStream
+from pathlib import Path
+import pandas as pd
+from common.results import GlobalProfile, CombustionResult
+from heat.postproc import profile_to_dataframe, summary_from_profile
+
 
 @dataclass(frozen=True)
 class CombustionResult:
@@ -119,3 +124,43 @@ def build_global_profile(stage_results: Sequence[StageResult]) -> GlobalProfile:
         dP_fric=dP_fric, dP_minor=dP_minor, dP_total=dP_total,
         stage_results=list(stage_results),
     )
+
+def write_results_csvs(
+    global_profile: GlobalProfile,
+    combustion: CombustionResult | None,
+    outdir: str | Path,
+    run_id: str,
+) -> Tuple[str, str]:
+    """
+    Write step-level and stage summary CSVs.
+
+    Returns:
+        (steps_csv_path, summary_csv_path) as strings.
+    """
+    outdir = Path(outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    steps_path = outdir / f"{run_id}_steps.csv"
+    summary_path = outdir / f"{run_id}_summary.csv"
+
+    df_steps = profile_to_dataframe(global_profile, remap_water=True)
+    rows, _, _ = summary_from_profile(global_profile, combustion=combustion)
+
+    df_steps.to_csv(steps_path, index=False)
+
+    pd.DataFrame(
+        rows,
+        columns=[
+            "stage_index", "stage_name", "stage_kind",
+            "Q_stage[MW]", "UA_stage[MW/K]",
+            "gas_in_T[°C]", "gas_out_T[°C]",
+            "water_in_h[kJ/kg]", "water_out_h[kJ/kg]",
+            "ΔP_stage_fric[Pa]", "ΔP_stage_minor[Pa]", "ΔP_stage_total[Pa]",
+            "Q_conv_stage[MW]", "Q_rad_stage[MW]",
+            "η_direct[-]", "η_indirect[-]",
+            "Q_total_useful[MW]", "Q_in_total[MW]",
+            "P_LHV[MW]", "LHV_mass[kJ/kg]",
+        ],
+    ).to_csv(summary_path, index=False)
+
+    return str(steps_path), str(summary_path)

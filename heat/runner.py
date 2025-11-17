@@ -72,22 +72,7 @@ def run_hx(
     df_steps = profile_to_dataframe(global_profile)
     rows, _, _ = summary_from_profile(global_profile, combustion=combustion)
 
-    if write_csv:
-        df_steps.to_csv(steps_path, index=False)
-        import pandas as pd
-        pd.DataFrame(rows, columns=[
-            "stage_index","stage_name","stage_kind",
-            "Q_stage[MW]","UA_stage[MW/K]",
-            "gas_in_T[°C]","gas_out_T[°C]",
-            "water_in_h[kJ/kg]","water_out_h[kJ/kg]",
-            "ΔP_stage_fric[Pa]","ΔP_stage_minor[Pa]","ΔP_stage_total[Pa]",
-            "Q_conv_stage[MW]","Q_rad_stage[MW]",
-            "η_direct[-]","η_indirect[-]",
-            "Q_total_useful[MW]","Q_in_total[MW]",
-            "P_LHV[MW]","LHV_mass[kJ/kg]",
-        ]).to_csv(summary_path, index=False)
-
-
+    # CSV writing moved out to heat/results.py; run_hx now only returns data
     return {
         "gas_in": gas,
         "water_in": water,
@@ -97,9 +82,11 @@ def run_hx(
         "global_profile": global_profile,
         "steps_df": df_steps,
         "summary_rows": rows,
-        "steps_csv": str(steps_path) if write_csv else None,
-        "summary_csv": str(summary_path) if write_csv else None,
+        # kept keys for backward compatibility; files are not written here anymore
+        "steps_csv": None,
+        "summary_csv": None,
         "run_id": run_id,
         "outdir": str(outdir),
         "combustion": combustion,
     }
+

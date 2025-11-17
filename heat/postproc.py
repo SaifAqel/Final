@@ -102,11 +102,11 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
             "i": i,
             "x[m]": gp.x[i].to("m").magnitude,
             "dx[m]": gp.dx[i].to("m").magnitude,
-            "qprime[W/m]": gp.qprime[i].to("W/m").magnitude,
-            "UA_prime[W/K/m]": gp.UA_prime[i].to("W/K/m").magnitude,
+            "qprime[MW/m]": gp.qprime[i].to("MW/m").magnitude,
+            "UA_prime[MW/K/m]": gp.UA_prime[i].to("MW/K/m").magnitude,
 
             # gas stream state + props (local i)
-            "gas_T[degC]": g.T.to("degC").magnitude,
+            "gas_T[°C]": g.T.to("degC").magnitude,
             "gas_P[Pa]": g.P.to("Pa").magnitude,
             "gas_h[kJ/kg]": g_h.to("kJ/kg").magnitude,
             "gas_cp[kJ/kg/K]": g_cp.to("kJ/kg/K").magnitude,
@@ -122,7 +122,7 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
             # water stream state + props (from mirrored j)
             "water_h[kJ/kg]": w.h.to("kJ/kg").magnitude,
             "water_P[Pa]": w.P.to("Pa").magnitude,
-            "water_T[degC]": Tw.to("degC").magnitude,
+            "water_T[°C]": Tw.to("degC").magnitude,
             "water_cp[kJ/kg/K]": _mag_or_nan(w_cp, "kJ/kg/K"),
             "water_mu[Pa*s]": _mag_or_nan(w_mu, "Pa*s"),
             "water_k[W/m/K]": _mag_or_nan(w_k, "W/m/K"),

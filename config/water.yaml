@@ -1,4 +1,3 @@
-mass_flow_rate: { value: 25, unit: kg/s }
 enthalpy: { value: 300000, unit: J/kg }
 pressure: { value: 1000000, unit: Pa }
 composition:

@@ -101,7 +101,7 @@ def load_operation(path: str) -> Dict[str, Q_]:
 def load_water_stream(path: str) -> WaterStream:
     doc = yaml.safe_load(open(path, "r", encoding="utf-8"))
     return WaterStream(
-        mass_flow=_q(doc["mass_flow_rate"]),
+        mass_flow=Q_(0, "kg/s"),
         h=_q(doc["enthalpy"]),
         P=_q(doc["pressure"]),
     )
