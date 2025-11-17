@@ -176,6 +176,10 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
     UA_total = 0.0
     Q_total_conv = 0.0
     Q_total_rad  = 0.0 
+    dP_total_fric = 0.0
+    dP_total_minor = 0.0
+    dP_total_total = 0.0
+    stack_T_C = None
 
     import itertools
     for k, grp in itertools.groupby(range(len(gp.x)), key=lambda i: gp.stage_index[i]):
@@ -202,6 +206,7 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         # gas endpoints: P, T, h (sensible), in/out
         gas_in_T  = g_in.T.to("degC").magnitude
         gas_out_T = g_out.T.to("degC").magnitude
+
         gas_in_P  = g_in.P.to("Pa").magnitude
         gas_out_P = g_out.P.to("Pa").magnitude
 
@@ -220,6 +225,8 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
 
         water_in_T  = WaterProps.T_from_Ph(w_in.P,  w_in.h).to("degC").magnitude
         water_out_T = WaterProps.T_from_Ph(w_out.P, w_out.h).to("degC").magnitude
+
+
 
         row = {
             "stage_index": k,
@@ -264,10 +271,15 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         }
         
         rows.append(row)
+
         Q_total += Q_stage
         UA_total += UA_stage
         Q_total_conv += Q_stage_conv
         Q_total_rad  += Q_stage_rad
+        dP_total_fric  += dP_fric
+        dP_total_minor += dP_minor
+        dP_total_total += dP_total
+        stack_T_C = gas_out_T
 
     # Global boiler useful duty (W)
     Q_useful = Q_total
@@ -323,9 +335,11 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         "water_out_T[°C]": "",
         "water_out_h[kJ/kg]": "",
 
-        "ΔP_stage_fric[Pa]": "",
-        "ΔP_stage_minor[Pa]": "",
-        "ΔP_stage_total[Pa]": "",
+        "ΔP_stage_fric[Pa]": dP_total_fric,
+        "ΔP_stage_minor[Pa]": dP_total_minor,
+        "ΔP_stage_total[Pa]": dP_total_total,
+
+        "stack_temperature[°C]": stack_T_C,
 
         "Q_conv_stage[MW]": Q_total_conv,
         "Q_rad_stage[MW]": Q_total_rad,

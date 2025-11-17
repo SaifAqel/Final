@@ -169,6 +169,7 @@ def write_results_csvs(
             "water_out_P[Pa]", "water_out_T[°C]", "water_out_h[kJ/kg]",
 
             "ΔP_stage_fric[Pa]", "ΔP_stage_minor[Pa]", "ΔP_stage_total[Pa]",
+            "stack temperature[°C]",
             "Q_conv_stage[MW]", "Q_rad_stage[MW]",
             "η_direct[-]", "η_indirect[-]",
             "Q_total_useful[MW]", "Q_in_total[MW]",
@@ -200,39 +201,39 @@ def write_results_csvs(
             "kind": df_stages["stage_kind"],
 
             # gas side (Pa, °C, kJ/kg)
-            "gas in pressure": df_stages["gas_in_P[Pa]"],
-            "gas in temp": df_stages["gas_in_T[°C]"],
-            "gas in enthalpy": df_stages["gas_in_h[kJ/kg]"],
-            "gas out pressure": df_stages["gas_out_P[Pa]"],
-            "gas out temp": df_stages["gas_out_T[°C]"],
-            "gas out enthalpy": df_stages["gas_out_h[kJ/kg]"],
+            "gas in pressure[pa]": df_stages["gas_in_P[Pa]"],
+            "gas in temp[°C]": df_stages["gas_in_T[°C]"],
+            "gas in enthalpy[h]": df_stages["gas_in_h[kJ/kg]"],
+            "gas out pressure[pa]": df_stages["gas_out_P[Pa]"],
+            "gas out temp[°C]": df_stages["gas_out_T[°C]"],
+            "gas out enthalpy[h]": df_stages["gas_out_h[kJ/kg]"],
 
             # water side (water pressure taken at inlet)
-            "water pressure": df_stages["water_in_P[Pa]"],
-            "water in temp": df_stages["water_in_T[°C]"],
-            "water in enthalpy": df_stages["water_in_h[kJ/kg]"],
-            "water out temp": df_stages["water_out_T[°C]"],
-            "water out enthalpy": df_stages["water_out_h[kJ/kg]"],
+            "water pressure[pa]": df_stages["water_in_P[Pa]"],
+            "water in temp[°C]": df_stages["water_in_T[°C]"],
+            "water in enthalpy[h]": df_stages["water_in_h[kJ/kg]"],
+            "water out temp[°C]": df_stages["water_out_T[°C]"],
+            "water out enthalpy[h]": df_stages["water_out_h[kJ/kg]"],
 
             # pressure drops
-            "pressure drop fric": df_stages["ΔP_stage_fric[Pa]"],
-            "pressure drop minor": df_stages["ΔP_stage_minor[Pa]"],
-            "pressure drop total": df_stages["ΔP_stage_total[Pa]"],
+            "pressure drop fric[pa]": df_stages["ΔP_stage_fric[Pa]"],
+            "pressure drop minor[pa]": df_stages["ΔP_stage_minor[Pa]"],
+            "pressure drop total[pa]": df_stages["ΔP_stage_total[Pa]"],
 
             # heat duties and UA (MW / MW/K)
-            "Q conv": df_stages["Q_conv_stage[MW]"],
-            "Q rad": df_stages["Q_rad_stage[MW]"],
-            "Q total": df_stages["Q_stage[MW]"],
-            "UA": df_stages["UA_stage[MW/K]"],
+            "Q conv[MW]": df_stages["Q_conv_stage[MW]"],
+            "Q rad[MW]": df_stages["Q_rad_stage[MW]"],
+            "Q total[MW]": df_stages["Q_stage[MW]"],
+            "UA[MW/K]": df_stages["UA_stage[MW/K]"],
 
             # steam capacity (t/h)
-            "steam capacity": df_stages["steam_capacity[t/h]"],
+            "steam capacity[t/h]": df_stages["steam_capacity[t/h]"],
         },
         index=df_stages.index,
     )
 
-    # rows = requested headers, columns = stage names
-    table.T.to_csv(stages_summary_path)
+    table = table.drop(columns=["name"], errors="ignore")
+    table.T.to_csv(stages_summary_path, index_label="name")
 
 
 
@@ -297,7 +298,7 @@ def write_results_csvs(
             ("eta indirect",                "η_indirect[-]"),
             ("water flow",                  "water_mass_flow[kg/s]"),
             ("steam capacity",              "steam_capacity[t/h]"),
-            ("stack temperature",           "gas_out_T[°C]"),
+            ("stack temperature[°C]",       "stack_temperature[°C]"),
         ]
 
         out_row = {}
@@ -307,11 +308,12 @@ def write_results_csvs(
             # column is missing, leave the value blank.
             out_row[new_name] = row0.get(src_col, "")
 
-        boiler_out_df = pd.DataFrame([out_row])
-        # Transpose so the CSV has your requested labels as row headers
-        boiler_out_df.T.to_csv(boiler_summary_path)
+        # Build a 2-column table: "parameter", "value"
+        boiler_out_df = pd.DataFrame([out_row]).T        # index = parameter names
+        boiler_out_df = boiler_out_df.reset_index()      # turn index into a column
+        boiler_out_df.columns = ["parameter", "value"]   # name the two columns
 
-
+        boiler_out_df.to_csv(boiler_summary_path, index=False)
 
     else:
         # No TOTAL_BOILER row – write an empty boiler summary with the same columns
