@@ -188,9 +188,15 @@ def write_results_csvs(
     df_stages = df_summary[df_summary["stage_name"] != "TOTAL_BOILER"][stage_cols].copy()
     df_boiler = df_summary[df_summary["stage_name"] == "TOTAL_BOILER"].copy()
 
+    try:
+        m_w = global_profile.water[0].mass_flow.to("kg/s").magnitude
+    except Exception:
+        m_w = float("nan")
 
-    # 4a) Write stages summary (same columns as before, just no TOTAL_BOILER)
-    df_stages.to_csv(stages_summary_path, index=False)
+    df_stages["steam_capacity[t/h]"] = m_w * 3600.0 / 1000.0  # kg/s → t/h
+
+    df_stages.T.to_csv(stages_summary_path)
+
 
     # 4b) Build boiler summary in "column" fashion, with added boiler-level data
     if not df_boiler.empty:
@@ -203,6 +209,8 @@ def write_results_csvs(
         except Exception:
             m_w = float("nan")
         boiler_row["water_mass_flow[kg/s]"] = m_w
+        boiler_row["steam_capacity[t/h]"] = m_w * 3600.0 / 1000.0
+
 
         # Add combustion-related scalars if available
         if combustion is not None:
@@ -229,7 +237,15 @@ def write_results_csvs(
             boiler_row["fuel_P_LHV[MW]"] = ""
 
         # Single-row boiler summary CSV
-        pd.DataFrame([boiler_row]).to_csv(boiler_summary_path, index=False)
+
+        boiler_df = pd.DataFrame([boiler_row])
+
+        # Drop columns that are all empty ("") or NaN in this row
+        empty_mask = boiler_df.apply(lambda col: (col.isna() | (col == "")).all())
+        boiler_df = boiler_df.loc[:, ~empty_mask]
+
+        boiler_df.T.to_csv(boiler_summary_path)
+
     else:
         # No TOTAL_BOILER row – write an empty boiler summary with the same columns
         empty_cols = list(df_summary.columns) + [

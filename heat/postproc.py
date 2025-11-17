@@ -189,7 +189,7 @@ def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | Non
         row = {
             "stage_index": k,
             "stage_name": name,
-            "stage_kind": "",
+            "stage_kind": gp.stage_results[k].stage_kind,
             "Q_stage[MW]": Q_stage,
             "UA_stage[MW/K]": UA_stage,
             "gas_in_T[°C]": gas_in_T,
