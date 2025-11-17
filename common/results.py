@@ -128,7 +128,7 @@ def write_results_csvs(
     combustion: CombustionResult | None,
     outdir: str | Path,
     run_id: str,
-) -> Tuple[str, str]:
+) -> Tuple[str, str, str]:
     """
     Write CSVs:
       - <run_id>_steps.csv           : step-level data (unchanged).
@@ -161,8 +161,13 @@ def write_results_csvs(
         columns=[
             "stage_index", "stage_name", "stage_kind",
             "Q_stage[MW]", "UA_stage[MW/K]",
-            "gas_in_T[°C]", "gas_out_T[°C]",
-            "water_in_h[kJ/kg]", "water_out_h[kJ/kg]",
+
+            "gas_in_P[Pa]", "gas_in_T[°C]", "gas_in_h[kJ/kg]",
+            "gas_out_P[Pa]", "gas_out_T[°C]", "gas_out_h[kJ/kg]",
+
+            "water_in_P[Pa]", "water_in_T[°C]", "water_in_h[kJ/kg]",
+            "water_out_P[Pa]", "water_out_T[°C]", "water_out_h[kJ/kg]",
+
             "ΔP_stage_fric[Pa]", "ΔP_stage_minor[Pa]", "ΔP_stage_total[Pa]",
             "Q_conv_stage[MW]", "Q_rad_stage[MW]",
             "η_direct[-]", "η_indirect[-]",

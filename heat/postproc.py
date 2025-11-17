@@ -22,6 +22,14 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
             stage_ranges[k][1] = i
     stage_ranges = {k: (v[0], v[1]) for k, v in stage_ranges.items()}
 
+    stage_offsets: dict[int, Q_] = {}
+    offset = Q_(0.0, "m")
+    for k, sr in enumerate(gp.stage_results):
+        stage_offsets[k] = offset
+        if sr.steps:
+            last = sr.steps[-1]
+            offset = (offset + last.x + last.dx).to("m")
+
     rows = []
     for i in range(len(gp.x)):
         g = gp.gas[i]
@@ -96,63 +104,70 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
             Lb_m,
         )
 
+        # --- x global: offset per stage + local x ---
+        x_local = gp.x[i].to("m")
+        x_global = (stage_offsets[k_stage] + x_local).to("m")
+
+        # NOTE: all units kept as in original code, only ordering/selection changed
         row = {
-            "stage_index": gp.stage_index[i],
-            "stage_name": gp.stage_name[i],
-            "i": i,
-            "x[m]": gp.x[i].to("m").magnitude,
+            # 1) identifiers
+            "stage_name": gp.stage_name[i],                      # stage name
+            "i": i,                                              # global step index
+
+            # 2) geometry / per-step
+            "x[m]": x_global.magnitude,                          # GLOBAL x
             "dx[m]": gp.dx[i].to("m").magnitude,
             "qprime[MW/m]": gp.qprime[i].to("MW/m").magnitude,
             "UA_prime[MW/K/m]": gp.UA_prime[i].to("MW/K/m").magnitude,
 
-            # gas stream state + props (local i)
-            "gas_T[°C]": g.T.to("degC").magnitude,
+            # 3) gas state
             "gas_P[Pa]": g.P.to("Pa").magnitude,
+            "gas_T[°C]": g.T.to("degC").magnitude,
             "gas_h[kJ/kg]": g_h.to("kJ/kg").magnitude,
+
+            # 4) water state (mirrored j)
+            "water_P[Pa]": w.P.to("Pa").magnitude,
+            "water_T[°C]": Tw.to("degC").magnitude,
+            "water_h[kJ/kg]": w.h.to("kJ/kg").magnitude,
+
+            # 5) phase / radiation flags
+            "gas_eps[-]": gas_eps,
+            "water_x[-]": _mag_or_nan(xq, ""),
+            "boiling": bool(xq is not None),
+
+            # 6) gas hydraulics & HTC
+            "gas_V[m/s]": gas_V.to("m/s").magnitude,
+            "Re_gas[-]": Re_gas,
+            "h_gas[W/m^2/K]": gp.h_g[i].to("W/m^2/K").magnitude,
+
+            # 7) water hydraulics & HTC
+            "water_V[m/s]": (
+                _mag_or_nan(water_V, "m/s") if isinstance(water_V, Q_) else float("nan")
+            ),
+            "Re_water[-]": Re_water,
+            "h_water[W/m^2/K]": gp.h_c[i].to("W/m^2/K").magnitude,
+
+            # 8) pressure drops (gas side, per step)
+            "dP_fric[Pa]": gp.dP_fric[i].to("Pa").magnitude,
+            "dP_minor[Pa]": gp.dP_minor[i].to("Pa").magnitude,
+            "dP_total[Pa]": gp.dP_total[i].to("Pa").magnitude,
+
+            # 9) gas transport / thermophysical
             "gas_cp[kJ/kg/K]": g_cp.to("kJ/kg/K").magnitude,
             "gas_mu[Pa*s]": g_mu.to("Pa*s").magnitude,
             "gas_k[W/m/K]": g_k.to("W/m/K").magnitude,
             "gas_rho[kg/m^3]": g_rho.to("kg/m^3").magnitude,
 
-            # NEW: gas velocity & Reynolds number & emissivity
-            "gas_V[m/s]": gas_V.to("m/s").magnitude,
-            "Re_gas[-]": Re_gas,
-            "gas_eps[-]": gas_eps,
-
-            # water stream state + props (from mirrored j)
-            "water_h[kJ/kg]": w.h.to("kJ/kg").magnitude,
-            "water_P[Pa]": w.P.to("Pa").magnitude,
-            "water_T[°C]": Tw.to("degC").magnitude,
+            # 10) water transport / thermophysical
             "water_cp[kJ/kg/K]": _mag_or_nan(w_cp, "kJ/kg/K"),
             "water_mu[Pa*s]": _mag_or_nan(w_mu, "Pa*s"),
             "water_k[W/m/K]": _mag_or_nan(w_k, "W/m/K"),
             "water_rho[kg/m^3]": _mag_or_nan(w_rho, "kg/m^3"),
-            "water_x[-]": _mag_or_nan(xq, ""),
-
-            # NEW: water velocity and Reynolds (NaN where undefined, e.g. 2-phase)
-            "water_V[m/s]": _mag_or_nan(water_V, "m/s") if isinstance(water_V, Q_) else float("nan"),
-            "Re_water[-]": Re_water,
-
-            # local HTCs and ΔP stay aligned with gas x
-            "h_gas[W/m^2/K]": gp.h_g[i].to("W/m^2/K").magnitude,
-            "h_water[W/m^2/K]": gp.h_c[i].to("W/m^2/K").magnitude,
-
-            "dP_fric[Pa]": gp.dP_fric[i].to("Pa").magnitude,
-            "dP_minor[Pa]": gp.dP_minor[i].to("Pa").magnitude,
-            "dP_total[Pa]": gp.dP_total[i].to("Pa").magnitude,
-
-            "boiling": bool(xq is not None),
         }
-
-        # optional gas composition
-        for sp, q in (g.comp or {}).items():
-            row[f"y_{sp}[-]"] = q.to("").magnitude
 
         rows.append(row)
 
-
     return pd.DataFrame(rows)
-
 
 
 def summary_from_profile(gp: "GlobalProfile", combustion: CombustionResult | None = None,) -> tuple[list[dict], float, float]:
