@@ -51,6 +51,11 @@ class StageResult:
     dP_stage_minor: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
     dP_stage_total: Q_ = field(default_factory=lambda: Q_(0.0, "Pa"))
 
+    hot_flow_A: Q_ = field(default_factory=lambda: Q_(0.0, "m^2"))
+    cold_flow_A: Q_ = field(default_factory=lambda: Q_(0.0, "m^2"))
+    hot_Dh: Q_ = field(default_factory=lambda: Q_(0.0, "m"))
+    cold_Dh: Q_ = field(default_factory=lambda: Q_(0.0, "m"))
+
 @dataclass(frozen=True)
 class GlobalProfile:
     # flattened along exchanger x

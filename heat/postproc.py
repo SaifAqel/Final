@@ -4,6 +4,7 @@ import pandas as pd
 from common.results import GlobalProfile
 from common.props import WaterProps, GasProps
 from common.units import Q_
+from heat.gas_htc import emissivity 
 
 _gas = GasProps()  # reuse for all rows
 
@@ -24,6 +25,14 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
     rows = []
     for i in range(len(gp.x)):
         g = gp.gas[i]
+
+        # stage index and geometry (same for gas + water in this row)
+        k_stage = gp.stage_index[i]
+        sr_stage = gp.stage_results[k_stage]
+        A_hot = sr_stage.hot_flow_A   # gas-side flow area
+        A_cold = sr_stage.cold_flow_A # water-side flow area
+        Dh_hot = sr_stage.hot_Dh      # gas-side hydraulic diameter
+        Dh_cold = sr_stage.cold_Dh    # water-side hydraulic diameter
 
         # mirrored index for water within the same stage block
         if remap_water:
@@ -56,6 +65,37 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
         g_k   = _gas.k(g.T, g.P, g.comp)
         g_rho = _gas.rho(g.T, g.P, g.comp)
 
+        # NEW: gas velocity and Reynolds number
+        gas_V = (g.mass_flow / (g_rho * A_hot)).to("m/s")
+        Re_gas = (g_rho * gas_V * Dh_hot / g_mu).to("").magnitude
+
+        # NEW: water velocity and Reynolds number
+        if w_rho is not None and A_cold is not None:
+            water_V = (w.mass_flow / (w_rho * A_cold)).to("m/s")
+        else:
+            water_V = None
+
+        if w_rho is not None and w_mu is not None and water_V is not None:
+            Re_water = (w_rho * water_V * Dh_cold / w_mu).to("").magnitude
+        else:
+            Re_water = float("nan")
+
+        # NEW: gas emissivity (H2O + CO2) using same model as gas_htc
+        y = g.comp or {}
+        yH2O = y.get("H2O", Q_(0.0, "")).to("").magnitude
+        yCO2 = y.get("CO2", Q_(0.0, "")).to("").magnitude
+        P_Pa = g.P.to("Pa").magnitude
+        pH2O = yH2O * P_Pa
+        pCO2 = yCO2 * P_Pa
+        # mean beam length same logic as _mean_beam_length (0.9 * Dh)
+        Lb_m = (0.9 * Dh_hot).to("m").magnitude
+        gas_eps = emissivity(
+            g.T.to("K").magnitude,
+            pH2O,
+            pCO2,
+            Lb_m,
+        )
+
         row = {
             "stage_index": gp.stage_index[i],
             "stage_name": gp.stage_name[i],
@@ -74,6 +114,11 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
             "gas_k[W/m/K]": g_k.to("W/m/K").magnitude,
             "gas_rho[kg/m^3]": g_rho.to("kg/m^3").magnitude,
 
+            # NEW: gas velocity & Reynolds number & emissivity
+            "gas_V[m/s]": gas_V.to("m/s").magnitude,
+            "Re_gas[-]": Re_gas,
+            "gas_eps[-]": gas_eps,
+
             # water stream state + props (from mirrored j)
             "water_h[J/kg]": w.h.to("J/kg").magnitude,
             "water_P[Pa]": w.P.to("Pa").magnitude,
@@ -83,6 +128,10 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
             "water_k[W/m/K]": _mag_or_nan(w_k, "W/m/K"),
             "water_rho[kg/m^3]": _mag_or_nan(w_rho, "kg/m^3"),
             "water_x[-]": _mag_or_nan(xq, ""),
+
+            # NEW: water velocity and Reynolds (NaN where undefined, e.g. 2-phase)
+            "water_V[m/s]": _mag_or_nan(water_V, "m/s") if isinstance(water_V, Q_) else float("nan"),
+            "Re_water[-]": Re_water,
 
             # local HTCs and ΔP stay aligned with gas x
             "h_gas[W/m^2/K]": gp.h_g[i].to("W/m^2/K").magnitude,
@@ -100,6 +149,7 @@ def profile_to_dataframe(gp: "GlobalProfile", *, remap_water: bool = True) -> "p
             row[f"y_{sp}[-]"] = q.to("").magnitude
 
         rows.append(row)
+
 
     return pd.DataFrame(rows)
 

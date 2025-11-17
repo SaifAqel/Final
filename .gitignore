@@ -4,6 +4,8 @@ inputs.md
 inputs.pdf
 report.md
 report.pdf
+results.xlsx
+formulas.md
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

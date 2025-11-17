@@ -307,6 +307,10 @@ def solve_stage(
         dP_stage_fric=dP_fric_sum,
         dP_stage_minor=dP_minor_sum,
         dP_stage_total=dP_total_sum,
+        hot_flow_A=stage.spec["hot_flow_A"],
+        cold_flow_A=stage.spec["cold_flow_A"],
+        hot_Dh=stage.spec["hot_Dh"],
+        cold_Dh=stage.spec["cold_Dh"],
     )
 
     # Quick internal consistency: Q_stage ≈ sum(q' dx)
