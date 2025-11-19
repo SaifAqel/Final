@@ -12,9 +12,11 @@ class CombustionResult:
     LHV: Q_
     Q_in: Q_
     T_ad: Q_
-    flue: GasStream
-    fuel_LHV_mass: Q_ | None = None   # e.g. kJ/kg
-    fuel_P_LHV: Q_ | None = None 
+    flue: GasStream               # fully-burnt flue used in boiler
+    flue_ad: GasStream | None = None   # equilibrium flue at T_ad (optional)
+    fuel_LHV_mass: Q_ | None = None
+    fuel_P_LHV: Q_ | None = None
+
 
 # ---------------- Streams are imported from common.models ----------------
 
@@ -285,20 +287,20 @@ def write_results_csvs(
         # Build reordered / reduced boiler summary in "row" fashion
         # New row labels (index) and corresponding source columns:
         summary_mapping = [
-            ("LHV",                         "LHV_mass[kJ/kg]"),
-            ("P-LHV",                       "P_LHV[MW]"),
-            ("Q_in total",                  "Q_in_total[MW]"),
-            ("Tad",                         "T_ad[°C]"),
-            ("UA",                          "UA_stage[MW/K]"),
-            ("Quseful",                     "Q_total_useful[MW]"),
-            ("pressue drop firc total",     "ΔP_stage_fric[Pa]"),
-            ("pressure drop minor total",   "ΔP_stage_minor[Pa]"),
-            ("pressure drop total",         "ΔP_stage_total[Pa]"),
-            ("eta direct",                  "η_direct[-]"),
-            ("eta indirect",                "η_indirect[-]"),
-            ("water flow",                  "water_mass_flow[kg/s]"),
-            ("steam capacity",              "steam_capacity[t/h]"),
-            ("stack temperature[°C]",       "stack_temperature[°C]"),
+            ("LHV[kJ/kg]",                      "LHV_mass[kJ/kg]"),
+            ("P-LHV[MW]",                       "P_LHV[MW]"),
+            ("Q_in total[MW]",                  "Q_in_total[MW]"),
+            ("Tad[°C]",                         "T_ad[°C]"),
+            ("UA[MW/K]",                        "UA_stage[MW/K]"),
+            ("Quseful[MW]",                     "Q_total_useful[MW]"),
+            ("pressue drop firc total[Pa]",     "ΔP_stage_fric[Pa]"),
+            ("pressure drop minor total[Pa]",   "ΔP_stage_minor[Pa]"),
+            ("pressure drop total[Pa]",         "ΔP_stage_total[Pa]"),
+            ("eta direct[-]",                   "η_direct[-]"),
+            ("eta indirect[-]",                 "η_indirect[-]"),
+            ("water flow[kg/s]",                "water_mass_flow[kg/s]"),
+            ("steam capacity[t/h]",             "steam_capacity[t/h]"),
+            ("stack temperature[°C]",           "stack_temperature[°C]"),
         ]
 
         out_row = {}
